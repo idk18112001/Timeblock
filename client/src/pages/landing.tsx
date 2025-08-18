@@ -15,10 +15,6 @@ const features = [
   {
     title: "Drag & Drop",
     subtitle: "Drop from notes into dates and time slots."
-  },
-  {
-    title: "Glassmorphism UI",
-    subtitle: "Calm. Focused. Futuristic."
   }
 ];
 

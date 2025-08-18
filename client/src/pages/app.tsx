@@ -39,6 +39,10 @@ export default function App() {
     setSelectedHour(null);
   };
 
+  const handleMonthChange = (date: Date) => {
+    setCurrentDate(date);
+  };
+
   const getCurrentViewTitle = () => {
     if (viewMode === "month") {
       return formatMonthYear(currentDate);
@@ -107,6 +111,7 @@ export default function App() {
           <MonthView 
             currentDate={currentDate}
             onDateClick={handleDateClick}
+            onMonthChange={handleMonthChange}
           />
         )}
       </main>

@@ -3,14 +3,17 @@ import { useDragDrop } from "@/hooks/use-drag-drop";
 import { getDaysInMonth, isSameMonth, formatDateString } from "@/lib/date-utils";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { Note, Task } from "@shared/schema";
 
 interface MonthViewProps {
   currentDate: Date;
   onDateClick: (date: Date) => void;
+  onMonthChange: (date: Date) => void;
 }
 
-export default function MonthView({ currentDate, onDateClick }: MonthViewProps) {
+export default function MonthView({ currentDate, onDateClick, onMonthChange }: MonthViewProps) {
   const days = getDaysInMonth(currentDate);
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -21,7 +24,7 @@ export default function MonthView({ currentDate, onDateClick }: MonthViewProps) 
   });
 
   const createTaskMutation = useMutation({
-    mutationFn: async (taskData: { noteId?: string; title: string; description?: string; priority: string; date: string }) => {
+    mutationFn: async (taskData: { noteId?: string; title: string; description?: string; priority: string; date: string; startTime?: string | null; duration?: number | null }) => {
       const res = await apiRequest("POST", "/api/tasks", taskData);
       return res.json();
     },
@@ -57,12 +60,15 @@ export default function MonthView({ currentDate, onDateClick }: MonthViewProps) 
   const handleNoteDrop = (date: Date, note: Note) => {
     const dateString = formatDateString(date);
     
+    // Create task without specific time - will appear in unscheduled section of day view
     createTaskMutation.mutate({
       noteId: note.id,
       title: note.title,
       description: note.description || undefined,
       priority: note.priority,
       date: dateString,
+      startTime: null, // No specific time, will appear in unscheduled section
+      duration: null,
     });
 
     // Remove note from drawer
@@ -74,8 +80,18 @@ export default function MonthView({ currentDate, onDateClick }: MonthViewProps) 
     });
   };
 
+  const handlePreviousMonth = () => {
+    const prevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    onMonthChange(prevMonth);
+  };
+
+  const handleNextMonth = () => {
+    const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
+    onMonthChange(nextMonth);
+  };
+
   return (
-    <div className="h-full">
+    <div className="h-full relative">
       <div className="glass-card rounded-2xl p-6 h-full shadow-xl">
         {/* Calendar Header */}
         <div className="grid grid-cols-7 gap-4 mb-4 pb-4 border-b border-white/10">
@@ -85,6 +101,27 @@ export default function MonthView({ currentDate, onDateClick }: MonthViewProps) 
             </div>
           ))}
         </div>
+      
+      {/* Month Navigation Arrows */}
+      <Button
+        onClick={handlePreviousMonth}
+        variant="ghost"
+        size="sm"
+        className="absolute left-2 top-1/2 transform -translate-y-1/2 z-10 text-white/70 hover:text-white hover:bg-white/10 rounded-full w-10 h-10 p-0"
+        data-testid="button-previous-month"
+      >
+        <ChevronLeft className="w-5 h-5" />
+      </Button>
+      
+      <Button
+        onClick={handleNextMonth}
+        variant="ghost"
+        size="sm"
+        className="absolute right-2 top-1/2 transform -translate-y-1/2 z-10 text-white/70 hover:text-white hover:bg-white/10 rounded-full w-10 h-10 p-0"
+        data-testid="button-next-month"
+      >
+        <ChevronRight className="w-5 h-5" />
+      </Button>
         
         {/* Calendar Grid - Force 6 rows */}
         <div 
@@ -137,7 +174,7 @@ export default function MonthView({ currentDate, onDateClick }: MonthViewProps) 
         {tasks.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div className="text-center text-white/60">
-              <p className="font-apercu text-lg">Pull up your Notes Drawer and drop your first task.</p>
+              <p className="font-apercu text-lg">Create notes and drag them here to schedule tasks.</p>
             </div>
           </div>
         )}

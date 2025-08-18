@@ -70,7 +70,7 @@ export default function DayView({ date, onClose, onHourClick }: DayViewProps) {
       priority: note.priority,
       date: dateString,
       startTime,
-      duration: 60,
+      duration: 60, // Default 1 hour, will appear in first quarter of hour view
     });
 
     deleteNoteMutation.mutate(note.id);
