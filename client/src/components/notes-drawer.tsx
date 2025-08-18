@@ -16,12 +16,10 @@ const mockNotesApi = {
   async getNotes(): Promise<Note[]> {
     const stored = localStorage.getItem('timeBlocker_notes');
     const notes = stored ? JSON.parse(stored) : [];
-    console.log('mockNotesApi.getNotes:', notes);
     return notes;
   },
   
   async createNote(note: InsertNote): Promise<Note> {
-    console.log('mockNotesApi.createNote called with:', note);
     const notes = await this.getNotes();
     const newNote: Note = {
       id: Date.now().toString(),
@@ -32,10 +30,8 @@ const mockNotesApi = {
       completed: note.completed || 0,
       createdAt: new Date(),
     };
-    console.log('Created note object:', newNote);
     notes.push(newNote);
     localStorage.setItem('timeBlocker_notes', JSON.stringify(notes));
-    console.log('Saved to localStorage. Total notes:', notes.length);
     return newNote;
   },
   
@@ -74,40 +70,28 @@ export default function NotesDrawer() {
   const { data: notes = [], isLoading } = useQuery<Note[]>({
     queryKey: ["/api/notes"],
     queryFn: async () => {
-      console.log('Fetching notes...');
       try {
         const res = await apiRequest("GET", "/api/notes", undefined);
         const data = await res.json();
-        console.log('API notes loaded:', data);
         return data;
       } catch (error) {
-        console.log('API failed, loading from localStorage');
         const data = await mockNotesApi.getNotes();
-        console.log('LocalStorage notes loaded:', data);
         return data;
       }
     },
   });
 
-  // Debug notes state
-  console.log('Current notes state:', notes, 'isLoading:', isLoading);
-
   const createNoteMutation = useMutation({
     mutationFn: async (note: InsertNote) => {
-      console.log('Mutation starting with note:', note);
       try {
         const res = await apiRequest("POST", "/api/notes", note);
-        console.log('API success:', res.status);
         return res.json();
       } catch (error) {
-        console.log('API failed, using localStorage:', error);
         const result = await mockNotesApi.createNote(note);
-        console.log('LocalStorage result:', result);
         return result;
       }
     },
     onSuccess: (data) => {
-      console.log('Mutation success:', data);
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       setNewNote({ title: "", description: "", priority: "medium" });
       setShowComposer(false);
@@ -124,7 +108,6 @@ export default function NotesDrawer() {
       });
     },
     onError: (error) => {
-      console.error('Mutation error:', error);
       toast({
         title: "Error",
         description: "Failed to create note. Please try again.",
@@ -177,7 +160,6 @@ export default function NotesDrawer() {
       completed: 0,
     };
     
-    console.log('Creating note:', noteToCreate);
     createNoteMutation.mutate(noteToCreate);
   };
 

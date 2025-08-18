@@ -110,6 +110,8 @@ export default function MonthView({ currentDate, onDateClick, onMonthChange }: M
   const handleNoteDrop = (date: Date, note: Note) => {
     const dateString = formatDateString(date);
     
+    console.log('Dropping note:', note.title, 'on date:', dateString);
+    
     // Create task without specific time - will appear in unscheduled section of day view
     createTaskMutation.mutate({
       noteId: note.id,
@@ -122,6 +124,7 @@ export default function MonthView({ currentDate, onDateClick, onMonthChange }: M
     });
 
     // Remove note from drawer
+    console.log('Deleting note with ID:', note.id);
     deleteNoteMutation.mutate(note.id);
     
     toast({

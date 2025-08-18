@@ -59,7 +59,7 @@ export default function Landing() {
           {/* Google Sign-Up Button */}
           <Button
             onClick={handleGoogleSignUp}
-            className="w-full py-4 px-6 rounded-xl mb-4 flex items-center justify-center gap-3 bg-white/10 hover:bg-white/20 transition-all border border-white/20 text-white backdrop-blur-sm"
+            className="w-full py-4 px-6 rounded-xl mb-4 flex items-center justify-center gap-3 glass-subtle hover:bg-white/20 transition-all text-white"
             variant="outline"
             data-testid="button-google-signup"
           >
