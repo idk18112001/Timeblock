@@ -1,0 +1,1148 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeBlock - Dump First, Organize Later</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: {
+                    'maison': ['Inter', 'system-ui', 'sans-serif'],
+                    'apercu': ['Inter', 'system-ui', 'sans-serif']
+                },
+                colors: {
+                    'dark-navy': '#1E1E2E',
+                    'deep-violet': '#3F1D79', 
+                    'royal-purple': '#5B21B6',
+                    'electric-violet': '#7C3AED',
+                    'blue-indigo': '#4F46E5',
+                    'soft-cyan': '#38BDF8'
+                },
+                backdropBlur: {
+                    '20': '20px'
+                }
+            }
+        }
+    };
+    </script>
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #1E1E2E 0%, #3F1D79 50%, #5B21B6 100%);
+        }
+        
+        .gradient-button {
+            background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .gradient-button:hover {
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.5);
+            transform: translateY(-1px);
+        }
+        
+        .drag-highlight {
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.6);
+            border-color: #38BDF8;
+        }
+        
+        .task-block {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .walkthrough-overlay {
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+        }
+        
+        .coachmark {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+        }
+        
+        .drawer-handle {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(8px);
+        }
+        
+        .note-item {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+        
+        .glass-input {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+        
+        .glass-input::placeholder {
+            color: rgba(255, 255, 255, 0.6);
+        }
+        
+        .screenshot-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-white font-apercu">
+    <!-- Landing Page -->
+    <div id="landing-page" class="min-h-screen flex">
+        <!-- Left Panel - Hero Content -->
+        <div class="w-1/2 flex items-center justify-center p-12">
+            <div class="glass-card rounded-3xl p-12 max-w-lg w-full">
+                <!-- Logo -->
+                <div class="text-center mb-8">
+                    <h1 class="text-3xl font-maison font-bold bg-gradient-to-r from-electric-violet to-blue-indigo bg-clip-text text-transparent">
+                        TimeBlock
+                    </h1>
+                </div>
+                
+                <!-- Hero Text -->
+                <div class="text-center mb-10">
+                    <h2 class="text-4xl font-maison font-bold text-gray-900 mb-4">
+                        Dump First, Organize Later
+                    </h2>
+                    <p class="text-lg text-gray-700">
+                        Capture tasks now. Arrange them when you're ready.
+                    </p>
+                </div>
+                
+                <!-- Sign Up Form -->
+                <div class="space-y-4">
+                    <!-- Google Sign Up Button -->
+                    <button class="w-full glass-card hover:bg-white/20 transition-all duration-300 p-4 rounded-xl flex items-center justify-center space-x-3 border border-white/30">
+                        <i class="fab fa-google text-xl"></i>
+                        <span class="font-medium text-gray-800">Sign up with Google</span>
+                    </button>
+                    
+                    <!-- Email Sign Up -->
+                    <div class="space-y-3">
+                        <input type="email" placeholder="Enter your email" 
+                               class="glass-input w-full p-4 rounded-xl focus:outline-none focus:ring-2 focus:ring-soft-cyan">
+                        <button class="gradient-button w-full p-4 rounded-xl font-medium text-white">
+                            Sign Up
+                        </button>
+                    </div>
+                    
+                    <!-- Sign In Link -->
+                    <div class="text-center">
+                        <p class="text-gray-600">
+                            Already have an account? 
+                            <button class="text-electric-violet hover:text-blue-indigo font-medium" onclick="showSignIn()">
+                                Sign In
+                            </button>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Right Panel - Feature Showcase -->
+        <div class="w-1/2 flex items-center justify-center p-12">
+            <div class="screenshot-card rounded-3xl p-8 max-w-2xl w-full">
+                <!-- Feature Carousel -->
+                <div id="carousel" class="relative h-80">
+                    <!-- Slide 1: 3-Level Navigation -->
+                    <div class="carousel-slide absolute inset-0 opacity-100 transition-opacity duration-500">
+                        <div class="text-center mb-6">
+                            <h3 class="text-2xl font-maison font-bold mb-3">3-Level Navigation</h3>
+                            <p class="text-gray-300">Month → Day → Hour. No extra buttons. Just click through.</p>
+                        </div>
+                        <!-- Month View mockup showing calendar grid -->
+                        <div class="glass-card rounded-xl p-4">
+                            <div class="grid grid-cols-7 gap-2">
+                                <div class="text-center py-2 text-sm font-medium">Mon</div>
+                                <div class="text-center py-2 text-sm font-medium">Tue</div>
+                                <div class="text-center py-2 text-sm font-medium">Wed</div>
+                                <div class="text-center py-2 text-sm font-medium">Thu</div>
+                                <div class="text-center py-2 text-sm font-medium">Fri</div>
+                                <div class="text-center py-2 text-sm font-medium">Sat</div>
+                                <div class="text-center py-2 text-sm font-medium">Sun</div>
+                                
+                                <!-- Calendar cells -->
+                                <div class="aspect-square glass-card rounded-lg p-2 cursor-pointer hover:bg-white/20">
+                                    <div class="text-xs text-right">1</div>
+                                    <div class="flex space-x-1 mt-1">
+                                        <div class="w-2 h-2 rounded-full bg-green-400"></div>
+                                        <div class="w-2 h-2 rounded-full bg-yellow-400"></div>
+                                    </div>
+                                </div>
+                                <div class="aspect-square glass-card rounded-lg p-2 cursor-pointer hover:bg-white/20">
+                                    <div class="text-xs text-right">2</div>
+                                </div>
+                                <div class="aspect-square glass-card rounded-lg p-2 cursor-pointer hover:bg-white/20">
+                                    <div class="text-xs text-right">3</div>
+                                    <div class="flex space-x-1 mt-1">
+                                        <div class="w-2 h-2 rounded-full bg-red-400"></div>
+                                    </div>
+                                </div>
+                                <div class="aspect-square glass-card rounded-lg p-2 cursor-pointer hover:bg-white/20 ring-2 ring-soft-cyan">
+                                    <div class="text-xs text-right">4</div>
+                                    <div class="flex space-x-1 mt-1">
+                                        <div class="w-2 h-2 rounded-full bg-green-400"></div>
+                                        <div class="w-2 h-2 rounded-full bg-yellow-400"></div>
+                                        <div class="w-2 h-2 rounded-full bg-red-400"></div>
+                                    </div>
+                                </div>
+                                <!-- More calendar cells... -->
+                                <div class="aspect-square glass-card rounded-lg p-2 cursor-pointer hover:bg-white/20">
+                                    <div class="text-xs text-right">5</div>
+                                </div>
+                                <div class="aspect-square glass-card rounded-lg p-2 cursor-pointer hover:bg-white/20">
+                                    <div class="text-xs text-right">6</div>
+                                </div>
+                                <div class="aspect-square glass-card rounded-lg p-2 cursor-pointer hover:bg-white/20">
+                                    <div class="text-xs text-right">7</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Slide 2: Notes Drawer -->
+                    <div class="carousel-slide absolute inset-0 opacity-0 transition-opacity duration-500">
+                        <div class="text-center mb-6">
+                            <h3 class="text-2xl font-maison font-bold mb-3">Notes Drawer</h3>
+                            <p class="text-gray-300">Persistent, dynamic, and drag-ready.</p>
+                        </div>
+                        <!-- Notes Drawer mockup -->
+                        <div class="space-y-3">
+                            <div class="note-item rounded-xl p-4 flex items-center space-x-3">
+                                <i class="fas fa-grip-vertical text-gray-400"></i>
+                                <div class="flex-1">
+                                    <div class="text-sm font-medium">Review quarterly reports</div>
+                                    <div class="text-xs text-gray-400">High priority task</div>
+                                </div>
+                                <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                            </div>
+                            <div class="note-item rounded-xl p-4 flex items-center space-x-3">
+                                <i class="fas fa-grip-vertical text-gray-400"></i>
+                                <div class="flex-1">
+                                    <div class="text-sm font-medium">Team standup meeting</div>
+                                    <div class="text-xs text-gray-400">Medium priority</div>
+                                </div>
+                                <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+                            </div>
+                            <div class="note-item rounded-xl p-4 flex items-center space-x-3">
+                                <i class="fas fa-grip-vertical text-gray-400"></i>
+                                <div class="flex-1">
+                                    <div class="text-sm font-medium">Update project documentation</div>
+                                    <div class="text-xs text-gray-400">Low priority</div>
+                                </div>
+                                <div class="w-3 h-3 rounded-full bg-green-400"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Slide 3: Drag & Drop -->
+                    <div class="carousel-slide absolute inset-0 opacity-0 transition-opacity duration-500">
+                        <div class="text-center mb-6">
+                            <h3 class="text-2xl font-maison font-bold mb-3">Drag & Drop</h3>
+                            <p class="text-gray-300">Drop from notes into dates and time slots.</p>
+                        </div>
+                        <!-- Drag & Drop demo -->
+                        <div class="flex space-x-4">
+                            <div class="flex-1">
+                                <div class="glass-card rounded-lg p-3 mb-3">
+                                    <div class="text-xs font-medium mb-2">Monday, Aug 4</div>
+                                    <div class="space-y-2">
+                                        <div class="task-block rounded p-2 text-xs">9:00 AM - Meeting</div>
+                                        <div class="task-block rounded p-2 text-xs drag-highlight">11:00 AM - New Task</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="w-px bg-gradient-to-b from-transparent via-white/20 to-transparent"></div>
+                            <div class="flex-1">
+                                <div class="note-item rounded-lg p-3 opacity-50 transform rotate-3">
+                                    <div class="text-xs">Task being dragged...</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Slide 4: Glassmorphism UI -->
+                    <div class="carousel-slide absolute inset-0 opacity-0 transition-opacity duration-500">
+                        <div class="text-center mb-6">
+                            <h3 class="text-2xl font-maison font-bold mb-3">Glassmorphism UI</h3>
+                            <p class="text-gray-300">Calm. Focused. Futuristic.</p>
+                        </div>
+                        <!-- UI elements showcase -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="glass-card rounded-xl p-4 text-center">
+                                <i class="fas fa-calendar text-2xl text-soft-cyan mb-2"></i>
+                                <div class="text-sm">Calendar View</div>
+                            </div>
+                            <div class="glass-card rounded-xl p-4 text-center">
+                                <i class="fas fa-clock text-2xl text-electric-violet mb-2"></i>
+                                <div class="text-sm">Time Blocks</div>
+                            </div>
+                            <div class="glass-card rounded-xl p-4 text-center">
+                                <i class="fas fa-sticky-note text-2xl text-yellow-400 mb-2"></i>
+                                <div class="text-sm">Quick Notes</div>
+                            </div>
+                            <div class="glass-card rounded-xl p-4 text-center">
+                                <i class="fas fa-arrows-alt text-2xl text-green-400 mb-2"></i>
+                                <div class="text-sm">Drag & Drop</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Carousel Controls -->
+                <div class="flex justify-center space-x-3 mt-6">
+                    <button class="carousel-dot w-3 h-3 rounded-full bg-white/30 hover:bg-white/50 active-dot" onclick="showSlide(0)"></button>
+                    <button class="carousel-dot w-3 h-3 rounded-full bg-white/30 hover:bg-white/50" onclick="showSlide(1)"></button>
+                    <button class="carousel-dot w-3 h-3 rounded-full bg-white/30 hover:bg-white/50" onclick="showSlide(2)"></button>
+                    <button class="carousel-dot w-3 h-3 rounded-full bg-white/30 hover:bg-white/50" onclick="showSlide(3)"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main App (Hidden initially) -->
+    <div id="main-app" class="hidden min-h-screen">
+        <!-- Header -->
+        <header class="glass-card border-b border-white/20 p-4">
+            <div class="flex items-center justify-between">
+                <div class="text-xl font-maison font-bold bg-gradient-to-r from-electric-violet to-blue-indigo bg-clip-text text-transparent">
+                    TimeBlock
+                </div>
+                <div class="text-center">
+                    <h1 id="breadcrumb" class="text-lg font-medium">August 2025 • Month</h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="startWalkthrough()" class="text-soft-cyan hover:text-white transition-colors">
+                        <i class="fas fa-question-circle"></i> Help
+                    </button>
+                    <div class="w-8 h-8 rounded-full bg-gradient-to-r from-electric-violet to-blue-indigo"></div>
+                </div>
+            </div>
+        </header>
+        
+        <!-- Main Content Area -->
+        <main class="flex-1 p-6 pb-32"> <!-- Extra bottom padding for drawer -->
+            <!-- Month View -->
+            <div id="month-view" class="glass-card rounded-2xl p-6">
+                <div class="mb-6">
+                    <h2 class="text-2xl font-maison font-bold mb-2">August 2025</h2>
+                    <div class="flex items-center space-x-4">
+                        <button class="text-soft-cyan hover:text-white">
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </button>
+                        <button class="text-soft-cyan hover:text-white">
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Calendar Grid -->
+                <div class="grid grid-cols-7 gap-2">
+                    <!-- Day headers -->
+                    <div class="text-center py-3 text-sm font-medium text-gray-300">Mon</div>
+                    <div class="text-center py-3 text-sm font-medium text-gray-300">Tue</div>
+                    <div class="text-center py-3 text-sm font-medium text-gray-300">Wed</div>
+                    <div class="text-center py-3 text-sm font-medium text-gray-300">Thu</div>
+                    <div class="text-center py-3 text-sm font-medium text-gray-300">Fri</div>
+                    <div class="text-center py-3 text-sm font-medium text-gray-300">Sat</div>
+                    <div class="text-center py-3 text-sm font-medium text-gray-300">Sun</div>
+                    
+                    <!-- Calendar cells -->
+                    <!-- @MAP: Array.from({length: 35}).map((_, i) => ( -->
+                    <!-- Week 1 -->
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-01')" data-date="2025-08-01">
+                        <div class="text-right text-sm mb-2">1</div>
+                        <div class="space-y-1">
+                            <div class="w-3 h-3 rounded-full bg-green-400" title="Low priority task"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-400" title="Medium priority task"></div>
+                        </div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-02')" data-date="2025-08-02">
+                        <div class="text-right text-sm mb-2">2</div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-03')" data-date="2025-08-03">
+                        <div class="text-right text-sm mb-2">3</div>
+                        <div class="space-y-1">
+                            <div class="w-3 h-3 rounded-full bg-red-400" title="High priority task"></div>
+                        </div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-04')" data-date="2025-08-04">
+                        <div class="text-right text-sm mb-2">4</div>
+                        <div class="space-y-1">
+                            <div class="w-3 h-3 rounded-full bg-green-400"></div>
+                            <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+                            <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                            <div class="text-xs text-gray-400">+2</div>
+                        </div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-05')" data-date="2025-08-05">
+                        <div class="text-right text-sm mb-2">5</div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-06')" data-date="2025-08-06">
+                        <div class="text-right text-sm mb-2">6</div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-07')" data-date="2025-08-07">
+                        <div class="text-right text-sm mb-2">7</div>
+                    </div>
+                    
+                    <!-- More weeks... -->
+                    <!-- Week 2 -->
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-08')" data-date="2025-08-08">
+                        <div class="text-right text-sm mb-2">8</div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-09')" data-date="2025-08-09">
+                        <div class="text-right text-sm mb-2">9</div>
+                        <div class="space-y-1">
+                            <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+                        </div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-10')" data-date="2025-08-10">
+                        <div class="text-right text-sm mb-2">10</div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-11')" data-date="2025-08-11">
+                        <div class="text-right text-sm mb-2">11</div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-12')" data-date="2025-08-12">
+                        <div class="text-right text-sm mb-2">12</div>
+                        <div class="space-y-1">
+                            <div class="w-3 h-3 rounded-full bg-green-400"></div>
+                            <div class="w-3 h-3 rounded-full bg-red-400"></div>
+                        </div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-13')" data-date="2025-08-13">
+                        <div class="text-right text-sm mb-2">13</div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-14')" data-date="2025-08-14">
+                        <div class="text-right text-sm mb-2">14</div>
+                    </div>
+                    
+                    <!-- Continue pattern for remaining days... -->
+                    <!-- Week 3 -->
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-15')" data-date="2025-08-15">
+                        <div class="text-right text-sm mb-2">15</div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-16')" data-date="2025-08-16">
+                        <div class="text-right text-sm mb-2">16</div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-17')" data-date="2025-08-17">
+                        <div class="text-right text-sm mb-2">17</div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-18')" data-date="2025-08-18">
+                        <div class="text-right text-sm mb-2">18</div>
+                        <div class="space-y-1">
+                            <div class="w-3 h-3 rounded-full bg-yellow-400"></div>
+                        </div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-19')" data-date="2025-08-19">
+                        <div class="text-right text-sm mb-2">19</div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-20')" data-date="2025-08-20">
+                        <div class="text-right text-sm mb-2">20</div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-21')" data-date="2025-08-21">
+                        <div class="text-right text-sm mb-2">21</div>
+                    </div>
+                    
+                    <!-- Week 4 -->
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-22')" data-date="2025-08-22">
+                        <div class="text-right text-sm mb-2">22</div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-23')" data-date="2025-08-23">
+                        <div class="text-right text-sm mb-2">23</div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-24')" data-date="2025-08-24">
+                        <div class="text-right text-sm mb-2">24</div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-25')" data-date="2025-08-25">
+                        <div class="text-right text-sm mb-2">25</div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-26')" data-date="2025-08-26">
+                        <div class="text-right text-sm mb-2">26</div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-27')" data-date="2025-08-27">
+                        <div class="text-right text-sm mb-2">27</div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-28')" data-date="2025-08-28">
+                        <div class="text-right text-sm mb-2">28</div>
+                    </div>
+                    
+                    <!-- Week 5 -->
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-29')" data-date="2025-08-29">
+                        <div class="text-right text-sm mb-2">29</div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-30')" data-date="2025-08-30">
+                        <div class="text-right text-sm mb-2">30</div>
+                    </div>
+                    <div class="day-cell aspect-square glass-card rounded-xl p-3 cursor-pointer hover:bg-white/20 transition-all drop-zone" onclick="openDayView('2025-08-31')" data-date="2025-08-31">
+                        <div class="text-right text-sm mb-2">31</div>
+                    </div>
+                    <!-- @END_MAP )) -->
+                </div>
+                
+                <!-- Empty State -->
+                <div id="empty-state" class="text-center py-12 text-gray-400">
+                    <i class="fas fa-calendar-plus text-4xl mb-4"></i>
+                    <p>Pull up your Notes Drawer and drop your first task.</p>
+                </div>
+            </div>
+        </main>
+        
+        <!-- Persistent Notes Drawer -->
+        <div id="notes-drawer" class="fixed bottom-0 left-0 right-0 z-40">
+            <!-- Drawer Handle -->
+            <div class="drawer-handle cursor-pointer px-6 py-2 rounded-t-xl" onclick="toggleDrawer()">
+                <div class="flex items-center justify-center space-x-3">
+                    <div class="w-12 h-1 bg-white/40 rounded-full"></div>
+                    <span class="text-sm text-white/70">
+                        <span id="task-count">3</span> notes
+                    </span>
+                    <i id="drawer-icon" class="fas fa-chevron-up text-white/70"></i>
+                </div>
+            </div>
+            
+            <!-- Drawer Content -->
+            <div id="drawer-content" class="glass-card rounded-t-xl p-6 transform translate-y-full transition-transform duration-300">
+                <!-- Add Note Form -->
+                <div class="mb-6 space-y-4">
+                    <div class="flex space-x-4">
+                        <input type="text" id="note-title" placeholder="Task title..." 
+                               class="glass-input flex-1 p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-soft-cyan">
+                        <select id="note-priority" class="glass-input p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-soft-cyan">
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                    <textarea id="note-description" placeholder="Optional description..." rows="2" 
+                              class="glass-input w-full p-3 rounded-xl focus:outline-none focus:ring-2 focus:ring-soft-cyan resize-none"></textarea>
+                    <button onclick="addNote()" class="gradient-button px-6 py-3 rounded-xl font-medium text-white">
+                        Add Note
+                    </button>
+                </div>
+                
+                <!-- Notes List -->
+                <div id="notes-list" class="space-y-3 max-h-64 overflow-y-auto">
+                    <!-- Sample Notes -->
+                    <div class="note-item rounded-xl p-4 flex items-center space-x-4 cursor-move" draggable="true" data-note-id="1">
+                        <i class="fas fa-grip-vertical text-gray-400"></i>
+                        <div class="flex-1">
+                            <div class="font-medium">Review quarterly reports</div>
+                            <div class="text-sm text-gray-400">Analyze Q3 performance metrics</div>
+                        </div>
+                        <div class="w-4 h-4 rounded-full bg-red-400" title="High priority"></div>
+                        <input type="checkbox" class="rounded">
+                        <button class="text-gray-400 hover:text-white">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="note-item rounded-xl p-4 flex items-center space-x-4 cursor-move" draggable="true" data-note-id="2">
+                        <i class="fas fa-grip-vertical text-gray-400"></i>
+                        <div class="flex-1">
+                            <div class="font-medium">Team standup meeting</div>
+                            <div class="text-sm text-gray-400">Daily sync with development team</div>
+                        </div>
+                        <div class="w-4 h-4 rounded-full bg-yellow-400" title="Medium priority"></div>
+                        <input type="checkbox" class="rounded">
+                        <button class="text-gray-400 hover:text-white">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                    
+                    <div class="note-item rounded-xl p-4 flex items-center space-x-4 cursor-move" draggable="true" data-note-id="3">
+                        <i class="fas fa-grip-vertical text-gray-400"></i>
+                        <div class="flex-1">
+                            <div class="font-medium">Update project documentation</div>
+                            <div class="text-sm text-gray-400">Revise API docs and user guides</div>
+                        </div>
+                        <div class="w-4 h-4 rounded-full bg-green-400" title="Low priority"></div>
+                        <input type="checkbox" class="rounded">
+                        <button class="text-gray-400 hover:text-white">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Empty State -->
+                <div id="notes-empty-state" class="hidden text-center py-8 text-gray-400">
+                    <i class="fas fa-sticky-note text-3xl mb-3"></i>
+                    <p>Write your first note below.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Day View Overlay -->
+    <div id="day-view-overlay" class="fixed inset-0 z-50 hidden">
+        <div class="walkthrough-overlay absolute inset-0" onclick="closeDayView()"></div>
+        <div class="absolute bottom-0 left-0 right-0 glass-card rounded-t-3xl p-6 transform translate-y-full transition-transform duration-300" id="day-view-content">
+            <!-- Day View Header -->
+            <div class="flex items-center justify-between mb-6">
+                <button onclick="previousDay()" class="text-soft-cyan hover:text-white">
+                    <i class="fas fa-chevron-left"></i> Previous
+                </button>
+                <h2 id="day-view-title" class="text-xl font-maison font-bold">Aug 18, 2025 (Mon)</h2>
+                <div class="flex items-center space-x-4">
+                    <button onclick="nextDay()" class="text-soft-cyan hover:text-white">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <button onclick="closeDayView()" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Unscheduled Tasks -->
+            <div class="mb-6">
+                <h3 class="text-sm font-medium text-gray-400 mb-3">Unscheduled</h3>
+                <div class="flex flex-wrap gap-2">
+                    <div class="task-block rounded-lg px-3 py-2 text-sm cursor-move" draggable="true">
+                        Team standup meeting
+                        <div class="w-2 h-2 rounded-full bg-yellow-400 inline-block ml-2"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Timeline -->
+            <div class="space-y-2 max-h-96 overflow-y-auto">
+                <!-- @MAP: Array.from({length: 24}).map((_, hour) => ( -->
+                <!-- Business hours highlighted -->
+                <div class="hour-row flex items-center space-x-4 py-3 px-4 rounded-xl hover:bg-white/5 cursor-pointer drop-zone" 
+                     onclick="openHourView(9)" 
+                     data-hour="9">
+                    <div class="w-16 text-sm text-gray-400">9:00 AM</div>
+                    <div class="flex-1 min-h-[40px] border-l border-white/20 pl-4">
+                        <div class="task-block rounded-lg p-3 cursor-move w-64" draggable="true">
+                            <div class="font-medium">Review quarterly reports</div>
+                            <div class="text-sm text-gray-400">9:00 - 10:00 AM</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="hour-row flex items-center space-x-4 py-3 px-4 rounded-xl hover:bg-white/5 cursor-pointer drop-zone" 
+                     onclick="openHourView(10)" 
+                     data-hour="10">
+                    <div class="w-16 text-sm text-gray-400">10:00 AM</div>
+                    <div class="flex-1 min-h-[40px] border-l border-white/20 pl-4"></div>
+                </div>
+                
+                <div class="hour-row flex items-center space-x-4 py-3 px-4 rounded-xl hover:bg-white/5 cursor-pointer drop-zone bg-white/5" 
+                     onclick="openHourView(11)" 
+                     data-hour="11">
+                    <div class="w-16 text-sm text-gray-400">11:00 AM</div>
+                    <div class="flex-1 min-h-[40px] border-l border-white/20 pl-4">
+                        <div class="task-block rounded-lg p-3 cursor-move w-48" draggable="true">
+                            <div class="font-medium">Project sync</div>
+                            <div class="text-sm text-gray-400">11:00 - 11:30 AM</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Continue pattern for more hours... -->
+                <div class="hour-row flex items-center space-x-4 py-3 px-4 rounded-xl hover:bg-white/5 cursor-pointer drop-zone" 
+                     onclick="openHourView(12)" 
+                     data-hour="12">
+                    <div class="w-16 text-sm text-gray-400">12:00 PM</div>
+                    <div class="flex-1 min-h-[40px] border-l border-white/20 pl-4"></div>
+                </div>
+                
+                <div class="hour-row flex items-center space-x-4 py-3 px-4 rounded-xl hover:bg-white/5 cursor-pointer drop-zone" 
+                     onclick="openHourView(13)" 
+                     data-hour="13">
+                    <div class="w-16 text-sm text-gray-400">1:00 PM</div>
+                    <div class="flex-1 min-h-[40px] border-l border-white/20 pl-4"></div>
+                </div>
+                
+                <div class="hour-row flex items-center space-x-4 py-3 px-4 rounded-xl hover:bg-white/5 cursor-pointer drop-zone" 
+                     onclick="openHourView(14)" 
+                     data-hour="14">
+                    <div class="w-16 text-sm text-gray-400">2:00 PM</div>
+                    <div class="flex-1 min-h-[40px] border-l border-white/20 pl-4"></div>
+                </div>
+                
+                <div class="hour-row flex items-center space-x-4 py-3 px-4 rounded-xl hover:bg-white/5 cursor-pointer drop-zone" 
+                     onclick="openHourView(15)" 
+                     data-hour="15">
+                    <div class="w-16 text-sm text-gray-400">3:00 PM</div>
+                    <div class="flex-1 min-h-[40px] border-l border-white/20 pl-4"></div>
+                </div>
+                
+                <div class="hour-row flex items-center space-x-4 py-3 px-4 rounded-xl hover:bg-white/5 cursor-pointer drop-zone" 
+                     onclick="openHourView(16)" 
+                     data-hour="16">
+                    <div class="w-16 text-sm text-gray-400">4:00 PM</div>
+                    <div class="flex-1 min-h-[40px] border-l border-white/20 pl-4"></div>
+                </div>
+                
+                <div class="hour-row flex items-center space-x-4 py-3 px-4 rounded-xl hover:bg-white/5 cursor-pointer drop-zone" 
+                     onclick="openHourView(17)" 
+                     data-hour="17">
+                    <div class="w-16 text-sm text-gray-400">5:00 PM</div>
+                    <div class="flex-1 min-h-[40px] border-l border-white/20 pl-4"></div>
+                </div>
+                <!-- @END_MAP )) -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hour View Overlay -->
+    <div id="hour-view-overlay" class="fixed inset-0 z-50 hidden">
+        <div class="walkthrough-overlay absolute inset-0" onclick="closeHourView()"></div>
+        <div class="absolute bottom-0 left-0 right-0 glass-card rounded-t-3xl p-6 transform translate-y-full transition-transform duration-300" id="hour-view-content">
+            <!-- Hour View Header -->
+            <div class="flex items-center justify-between mb-6">
+                <button onclick="previousHour()" class="text-soft-cyan hover:text-white">
+                    <i class="fas fa-chevron-left"></i> 8 AM
+                </button>
+                <h2 id="hour-view-title" class="text-xl font-maison font-bold">Aug 18, 2025 • 09:00–09:59</h2>
+                <div class="flex items-center space-x-4">
+                    <button onclick="nextHour()" class="text-soft-cyan hover:text-white">
+                        10 AM <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <button onclick="closeHourView()" class="text-gray-400 hover:text-white">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 15-minute Grid -->
+            <div class="grid grid-cols-4 gap-4">
+                <div class="text-center">
+                    <div class="text-sm text-gray-400 mb-2">9:00</div>
+                    <div class="hour-segment glass-card rounded-xl p-4 h-24 cursor-pointer hover:bg-white/20 drop-zone flex items-center justify-center" 
+                         data-time="09:00">
+                        <div class="task-block rounded p-2 w-full text-center text-sm">
+                            Reports Review
+                        </div>
+                    </div>
+                </div>
+                <div class="text-center">
+                    <div class="text-sm text-gray-400 mb-2">9:15</div>
+                    <div class="hour-segment glass-card rounded-xl p-4 h-24 cursor-pointer hover:bg-white/20 drop-zone" 
+                         data-time="09:15">
+                    </div>
+                </div>
+                <div class="text-center">
+                    <div class="text-sm text-gray-400 mb-2">9:30</div>
+                    <div class="hour-segment glass-card rounded-xl p-4 h-24 cursor-pointer hover:bg-white/20 drop-zone" 
+                         data-time="09:30">
+                    </div>
+                </div>
+                <div class="text-center">
+                    <div class="text-sm text-gray-400 mb-2">9:45</div>
+                    <div class="hour-segment glass-card rounded-xl p-4 h-24 cursor-pointer hover:bg-white/20 drop-zone" 
+                         data-time="09:45">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Walkthrough Overlay -->
+    <div id="walkthrough-overlay" class="fixed inset-0 z-50 hidden walkthrough-overlay">
+        <div class="absolute inset-0 flex items-center justify-center p-6">
+            <div class="coachmark rounded-2xl p-6 max-w-md text-center text-gray-800">
+                <div id="walkthrough-step-content">
+                    <!-- Step content will be dynamically inserted -->
+                </div>
+                <div class="flex justify-between mt-6">
+                    <button id="walkthrough-back" onclick="previousWalkthroughStep()" class="hidden px-4 py-2 text-gray-600 hover:text-gray-800">
+                        Back
+                    </button>
+                    <div class="flex space-x-3">
+                        <button onclick="skipWalkthrough()" class="px-4 py-2 text-gray-600 hover:text-gray-800">
+                            Skip
+                        </button>
+                        <button id="walkthrough-next" onclick="nextWalkthroughStep()" class="gradient-button px-6 py-2 rounded-lg text-white">
+                            Next
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed top-4 right-4 z-60 space-y-2">
+        <!-- Toasts will be dynamically inserted here -->
+    </div>
+
+    <script>
+        // Global state
+        let currentSlide = 0;
+        let currentWalkthroughStep = 0;
+        let isDrawerOpen = false;
+        let draggingElement = null;
+        let currentDate = '2025-08-18';
+        let currentHour = 9;
+        
+        // Auto-rotating carousel
+        setInterval(() => {
+            currentSlide = (currentSlide + 1) % 4;
+            showSlide(currentSlide);
+        }, 5000);
+        
+        function showSlide(index) {
+            const slides = document.querySelectorAll('.carousel-slide');
+            const dots = document.querySelectorAll('.carousel-dot');
+            
+            slides.forEach((slide, i) => {
+                slide.style.opacity = i === index ? '1' : '0';
+            });
+            
+            dots.forEach((dot, i) => {
+                if (i === index) {
+                    dot.classList.add('bg-white/70');
+                    dot.classList.remove('bg-white/30');
+                } else {
+                    dot.classList.add('bg-white/30');
+                    dot.classList.remove('bg-white/70');
+                }
+            });
+            
+            currentSlide = index;
+        }
+        
+        function showSignIn() {
+            // TODO: Implement sign in modal
+            showToast('Sign In functionality to be implemented');
+        }
+        
+        function enterApp() {
+            document.getElementById('landing-page').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            
+            // Check if walkthrough should be shown
+            if (!localStorage.getItem('timeblock_walkthrough_done')) {
+                setTimeout(() => startWalkthrough(), 500);
+            }
+        }
+        
+        // Walkthrough system
+        const walkthroughSteps = [
+            {
+                title: "Welcome to TimeBlock",
+                content: "This is your Month View. Click any date to zoom into the Day.",
+                target: "#month-view"
+            },
+            {
+                title: "Your Notes Drawer",
+                content: "Your Notes Drawer is always here. Write first, organize later.",
+                target: "#notes-drawer"
+            },
+            {
+                title: "Drag & Drop",
+                content: "Drag a note onto a date to schedule it for that day.",
+                target: ".note-item"
+            },
+            {
+                title: "Day View",
+                content: "Click a date to see your Day timeline. Drop tasks into hours to set times.",
+                target: ".day-cell"
+            },
+            {
+                title: "Hour View", 
+                content: "Click an hour to fine-tune in 15-minute blocks. Precise and fast.",
+                target: ".hour-row"
+            }
+        ];
+        
+        function startWalkthrough() {
+            currentWalkthroughStep = 0;
+            document.getElementById('walkthrough-overlay').classList.remove('hidden');
+            showWalkthroughStep();
+        }
+        
+        function showWalkthroughStep() {
+            const step = walkthroughSteps[currentWalkthroughStep];
+            const content = document.getElementById('walkthrough-step-content');
+            
+            content.innerHTML = `
+                <h3 class="text-xl font-maison font-bold mb-3">${step.title}</h3>
+                <p class="text-gray-600">${step.content}</p>
+            `;
+            
+            // Show/hide back button
+            const backBtn = document.getElementById('walkthrough-back');
+            if (currentWalkthroughStep > 0) {
+                backBtn.classList.remove('hidden');
+            } else {
+                backBtn.classList.add('hidden');
+            }
+            
+            // Update next button text
+            const nextBtn = document.getElementById('walkthrough-next');
+            if (currentWalkthroughStep === walkthroughSteps.length - 1) {
+                nextBtn.textContent = 'Finish';
+            } else {
+                nextBtn.textContent = 'Next';
+            }
+        }
+        
+        function nextWalkthroughStep() {
+            if (currentWalkthroughStep < walkthroughSteps.length - 1) {
+                currentWalkthroughStep++;
+                showWalkthroughStep();
+            } else {
+                finishWalkthrough();
+            }
+        }
+        
+        function previousWalkthroughStep() {
+            if (currentWalkthroughStep > 0) {
+                currentWalkthroughStep--;
+                showWalkthroughStep();
+            }
+        }
+        
+        function skipWalkthrough() {
+            finishWalkthrough();
+        }
+        
+        function finishWalkthrough() {
+            localStorage.setItem('timeblock_walkthrough_done', 'true');
+            document.getElementById('walkthrough-overlay').classList.add('hidden');
+        }
+        
+        // Notes Drawer functionality
+        function toggleDrawer() {
+            const content = document.getElementById('drawer-content');
+            const icon = document.getElementById('drawer-icon');
+            
+            if (isDrawerOpen) {
+                content.classList.add('translate-y-full');
+                icon.classList.remove('fa-chevron-down');
+                icon.classList.add('fa-chevron-up');
+                isDrawerOpen = false;
+            } else {
+                content.classList.remove('translate-y-full');
+                icon.classList.remove('fa-chevron-up');
+                icon.classList.add('fa-chevron-down');
+                isDrawerOpen = true;
+            }
+        }
+        
+        function addNote() {
+            const title = document.getElementById('note-title').value;
+            const description = document.getElementById('note-description').value;
+            const priority = document.getElementById('note-priority').value;
+            
+            if (!title.trim()) {
+                showToast('Please enter a task title', 'error');
+                return;
+            }
+            
+            // TODO: Add note to state/storage
+            showToast('Note added! Drag it to schedule.');
+            
+            // Clear form
+            document.getElementById('note-title').value = '';
+            document.getElementById('note-description').value = '';
+            document.getElementById('note-priority').value = 'low';
+        }
+        
+        // Day View functionality
+        function openDayView(date) {
+            currentDate = date;
+            document.getElementById('day-view-title').textContent = formatDate(date);
+            document.getElementById('day-view-overlay').classList.remove('hidden');
+            
+            setTimeout(() => {
+                document.getElementById('day-view-content').classList.remove('translate-y-full');
+            }, 10);
+            
+            updateBreadcrumb(`${formatDate(date)} • Day`);
+        }
+        
+        function closeDayView() {
+            document.getElementById('day-view-content').classList.add('translate-y-full');
+            setTimeout(() => {
+                document.getElementById('day-view-overlay').classList.add('hidden');
+            }, 300);
+            
+            updateBreadcrumb('August 2025 • Month');
+        }
+        
+        function previousDay() {
+            // TODO: Implement previous day navigation
+            showToast('Previous day navigation');
+        }
+        
+        function nextDay() {
+            // TODO: Implement next day navigation  
+            showToast('Next day navigation');
+        }
+        
+        // Hour View functionality
+        function openHourView(hour) {
+            currentHour = hour;
+            document.getElementById('hour-view-title').textContent = `${formatDate(currentDate)} • ${formatHour(hour)}:00–${formatHour(hour)}:59`;
+            document.getElementById('hour-view-overlay').classList.remove('hidden');
+            
+            setTimeout(() => {
+                document.getElementById('hour-view-content').classList.remove('translate-y-full');
+            }, 10);
+            
+            updateBreadcrumb(`${formatDate(currentDate)} • ${formatHour(hour)}:00 • Hour`);
+        }
+        
+        function closeHourView() {
+            document.getElementById('hour-view-content').classList.add('translate-y-full');
+            setTimeout(() => {
+                document.getElementById('hour-view-overlay').classList.add('hidden');
+            }, 300);
+            
+            updateBreadcrumb(`${formatDate(currentDate)} • Day`);
+        }
+        
+        function previousHour() {
+            if (currentHour > 0) {
+                openHourView(currentHour - 1);
+            }
+        }
+        
+        function nextHour() {
+            if (currentHour < 23) {
+                openHourView(currentHour + 1);
+            }
+        }
+        
+        // Utility functions
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            const options = { 
+                month: 'short', 
+                day: 'numeric', 
+                year: 'numeric',
+                weekday: 'short'
+            };
+            return date.toLocaleDateString('en-US', options);
+        }
+        
+        function formatHour(hour) {
+            if (hour === 0) return '12';
+            if (hour <= 12) return hour.toString();
+            return (hour - 12).toString();
+        }
+        
+        function updateBreadcrumb(text) {
+            document.getElementById('breadcrumb').textContent = text;
+        }
+        
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            
+            const bgColor = type === 'success' ? 'bg-green-500' : 'bg-red-500';
+            
+            toast.className = `glass-card rounded-lg p-4 text-white ${bgColor} transform translate-x-full transition-transform duration-300`;
+            toast.textContent = message;
+            
+            container.appendChild(toast);
+            
+            // Slide in
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full');
+            }, 10);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                toast.classList.add('translate-x-full');
+                setTimeout(() => {
+                    container.removeChild(toast);
+                }, 300);
+            }, 3000);
+        }
+        
+        // Drag and Drop functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            // Make note items draggable
+            document.addEventListener('dragstart', function(e) {
+                if (e.target.classList.contains('note-item') || e.target.closest('.note-item')) {
+                    draggingElement = e.target.closest('.note-item');
+                    e.dataTransfer.effectAllowed = 'move';
+                }
+            });
+            
+            // Add drop zone highlighting
+            document.addEventListener('dragover', function(e) {
+                if (draggingElement && e.target.classList.contains('drop-zone')) {
+                    e.preventDefault();
+                    e.target.classList.add('drag-highlight');
+                }
+            });
+            
+            document.addEventListener('dragleave', function(e) {
+                if (e.target.classList.contains('drop-zone')) {
+                    e.target.classList.remove('drag-highlight');
+                }
+            });
+            
+            // Handle drops
+            document.addEventListener('drop', function(e) {
+                if (draggingElement && e.target.classList.contains('drop-zone')) {
+                    e.preventDefault();
+                    e.target.classList.remove('drag-highlight');
+                    
+                    // TODO: Implement actual task scheduling logic
+                    const taskTitle = draggingElement.querySelector('.font-medium').textContent;
+                    
+                    if (e.target.classList.contains('day-cell')) {
+                        const date = e.target.dataset.date;
+                        showToast(`"${taskTitle}" scheduled for ${formatDate(date)}`);
+                    } else if (e.target.classList.contains('hour-row')) {
+                        const hour = e.target.dataset.hour;
+                        showToast(`"${taskTitle}" scheduled at ${formatHour(hour)}:00`);
+                    } else if (e.target.classList.contains('hour-segment')) {
+                        const time = e.target.dataset.time;
+                        showToast(`"${taskTitle}" scheduled at ${time}`);
+                    }
+                    
+                    // Remove note from drawer (simulate)
+                    draggingElement.style.opacity = '0.5';
+                    setTimeout(() => {
+                        if (draggingElement.parentNode) {
+                            draggingElement.parentNode.removeChild(draggingElement);
+                        }
+                    }, 300);
+                }
+                
+                draggingElement = null;
+            });
+            
+            // Auto-enter app for demo (remove in production)
+            setTimeout(() => {
+                enterApp();
+            }, 2000);
+        });
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                if (!document.getElementById('hour-view-overlay').classList.contains('hidden')) {
+                    closeHourView();
+                } else if (!document.getElementById('day-view-overlay').classList.contains('hidden')) {
+                    closeDayView();
+                } else if (!document.getElementById('walkthrough-overlay').classList.contains('hidden')) {
+                    skipWalkthrough();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

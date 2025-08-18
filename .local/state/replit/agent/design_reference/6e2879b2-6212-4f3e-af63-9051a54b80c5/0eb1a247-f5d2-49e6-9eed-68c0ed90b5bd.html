@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeBlock - Dump First, Organize Later</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                fontFamily: {
+                    'inter': ['Inter', 'system-ui', 'sans-serif']
+                },
+                colors: {
+                    purple: {
+                        primary: '#8B5CF6'
+                    }
+                },
+                backdropBlur: {
+                    'heavy': '24px',
+                    'extra': '20px'
+                }
+            }
+        }
+    };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        * {
+            font-family: 'Inter', system-ui, sans-serif;
+        }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.65);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .glass-heavy {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(24px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, rgba(139,92,246,0.25) 0%, rgba(139,92,246,0.15) 50%, rgba(139,92,246,0) 100%);
+        }
+        
+        .gradient-primary {
+            background: linear-gradient(135deg, #8B5CF6 0%, #A855F7 100%);
+        }
+        
+        .gradient-hover {
+            background: linear-gradient(135deg, rgba(139,92,246,0.1) 0%, rgba(139,92,246,0.05) 100%);
+        }
+        
+        .glow-purple {
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+        }
+        
+        .glow-heavy {
+            box-shadow: 0 0 30px rgba(139, 92, 246, 0.4), 0 0 60px rgba(139, 92, 246, 0.2);
+        }
+        
+        .task-low { background: linear-gradient(135deg, #34D399 0%, #10B981 100%); }
+        .task-medium { background: linear-gradient(135deg, #FACC15 0%, #F59E0B 100%); }
+        .task-high { background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%); }
+        
+        .hover-lift {
+            transition: all 200ms ease-in-out;
+        }
+        
+        .hover-lift:hover {
+            transform: scale(1.02) translateY(-2px);
+            box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
+        }
+        
+        .drag-handle {
+            cursor: grab;
+        }
+        
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+        
+        .overlay {
+            backdrop-filter: blur(16px);
+            background: rgba(0, 0, 0, 0.3);
+        }
+        
+        .calendar-cell {
+            min-height: 120px;
+            transition: all 200ms ease-in-out;
+        }
+        
+        .calendar-cell:hover {
+            background: linear-gradient(135deg, rgba(139,92,246,0.15) 0%, rgba(139,92,246,0.05) 100%);
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(139, 92, 246, 0.2);
+        }
+        
+        .task-block {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(16px);
+            border-left: 4px solid #8B5CF6;
+        }
+        
+        .drawer-handle {
+            background: linear-gradient(135deg, rgba(139,92,246,0.8) 0%, rgba(139,92,246,0.6) 100%);
+            backdrop-filter: blur(20px);
+        }
+        
+        @keyframes slideUp {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .slide-up { animation: slideUp 300ms ease-out; }
+        .fade-in { animation: fadeIn 200ms ease-out; }
+        
+        .walkthrough-overlay {
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(8px);
+        }
+        
+        .coachmark {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(24px);
+            border: 2px solid rgba(139, 92, 246, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-white font-inter">
+    
+    <!-- Landing Page -->
+    <div id="landing-page" class="min-h-screen flex">
+        <!-- Left Panel - Sign Up -->
+        <div class="w-1/2 p-12 flex flex-col justify-center relative">
+            <div class="absolute inset-0 gradient-bg"></div>
+            <div class="relative z-10 max-w-md mx-auto">
+                <!-- Logo/Wordmark -->
+                <h1 class="text-4xl font-bold mb-2 gradient-primary bg-clip-text text-transparent">
+                    TimeBlock
+                </h1>
+                
+                <!-- Hero Line -->
+                <h2 class="text-4xl font-semibold text-gray-900 mb-6">
+                    Dump First, Organize Later
+                </h2>
+                
+                <!-- Subtext -->
+                <p class="text-gray-600 mb-12 text-lg">
+                    Capture tasks now. Arrange them when you're ready.
+                </p>
+                
+                <!-- Google Sign Up -->
+                <button class="w-full glass-heavy rounded-xl p-4 mb-6 hover-lift flex items-center justify-center gap-3 text-gray-700 font-medium text-lg">
+                    <i class="fab fa-google text-xl"></i>
+                    Sign up with Google
+                </button>
+                
+                <!-- Email Sign Up -->
+                <div class="space-y-4 mb-6">
+                    <input 
+                        type="email" 
+                        placeholder="Enter your email" 
+                        class="w-full glass rounded-xl p-4 text-gray-700 placeholder-gray-500 border-0 focus:outline-none focus:ring-2 focus:ring-purple-primary"
+                    >
+                    <button class="w-full glass rounded-xl p-4 hover-lift gradient-primary text-white font-medium text-lg">
+                        Sign Up
+                    </button>
+                </div>
+                
+                <!-- Sign In Link -->
+                <p class="text-center text-gray-600">
+                    Already have an account? 
+                    <a href="#" class="text-purple-primary font-semibold hover:underline">Sign In</a>
+                </p>
+            </div>
+        </div>
+        
+        <!-- Right Panel - Feature Showcase -->
+        <div class="w-1/2 p-12 relative flex items-center justify-center">
+            <div class="absolute inset-0 gradient-bg opacity-50"></div>
+            
+            <!-- Feature Carousel -->
+            <div class="relative z-10 w-full max-w-lg">
+                <div id="carousel" class="glass-heavy rounded-2xl p-8 glow-purple">
+                    <!-- Slide 1 - 3-Level Navigation -->
+                    <div class="carousel-slide active">
+                        <div class="text-center mb-6">
+                            <h3 class="text-2xl font-semibold text-gray-800 mb-4">
+                                Month → Day → Hour
+                            </h3>
+                            <p class="text-gray-600">No extra buttons. Just click through.</p>
+                        </div>
+                        <div class="glass rounded-xl p-6 bg-gradient-to-br from-purple-50 to-white">
+                            <!-- Mock Calendar -->
+                            <div class="grid grid-cols-7 gap-2 text-sm">
+                                <div class="text-center font-medium text-gray-500 p-2">Mon</div>
+                                <div class="text-center font-medium text-gray-500 p-2">Tue</div>
+                                <div class="text-center font-medium text-gray-500 p-2">Wed</div>
+                                <div class="text-center font-medium text-gray-500 p-2">Thu</div>
+                                <div class="text-center font-medium text-gray-500 p-2">Fri</div>
+                                <div class="text-center font-medium text-gray-500 p-2">Sat</div>
+                                <div class="text-center font-medium text-gray-500 p-2">Sun</div>
+                                
+                                <div class="glass rounded p-3 hover-lift cursor-pointer">
+                                    <div class="text-right text-xs text-gray-400">15</div>
+                                    <div class="flex gap-1 mt-1">
+                                        <div class="w-2 h-2 task-low rounded-full"></div>
+                                        <div class="w-2 h-2 task-medium rounded-full"></div>
+                                    </div>
+                                </div>
+                                <div class="glass rounded p-3 hover-lift cursor-pointer glow-purple">
+                                    <div class="text-right text-xs text-gray-400">16</div>
+                                    <div class="flex gap-1 mt-1">
+                                        <div class="w-2 h-2 task-high rounded-full"></div>
+                                        <div class="text-xs text-gray-500">+2</div>
+                                    </div>
+                                </div>
+                                <div class="glass rounded p-3 hover-lift cursor-pointer">
+                                    <div class="text-right text-xs text-gray-400">17</div>
+                                </div>
+                                <div class="glass rounded p-3 hover-lift cursor-pointer">
+                                    <div class="text-right text-xs text-gray-400">18</div>
+                                    <div class="flex gap-1 mt-1">
+                                        <div class="w-2 h-2 task-medium rounded-full"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Carousel Dots -->
+                <div class="flex justify-center mt-6 gap-2">
+                    <div class="w-3 h-3 rounded-full bg-purple-primary"></div>
+                    <div class="w-3 h-3 rounded-full bg-gray-300"></div>
+                    <div class="w-3 h-3 rounded-full bg-gray-300"></div>
+                    <div class="w-3 h-3 rounded-full bg-gray-300"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="main-app" class="hidden min-h-screen relative">
+        <!-- Background Gradient Bursts -->
+        <div class="fixed inset-0 pointer-events-none">
+            <div class="absolute top-0 right-0 w-96 h-96 gradient-bg rounded-full blur-3xl"></div>
+            <div class="absolute bottom-0 left-0 w-80 h-80 gradient-bg rounded-full blur-3xl opacity-60"></div>
+        </div>
+        
+        <!-- Header -->
+        <header class="glass-heavy border-b border-gray-200 p-4 relative z-20">
+            <div class="flex items-center justify-between">
+                <div class="text-2xl font-bold gradient-primary bg-clip-text text-transparent">
+                    TimeBlock
+                </div>
+                
+                <div class="text-center">
+                    <div id="breadcrumb" class="text-lg font-semibold text-gray-800">August 2025 • Month</div>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <button id="help-btn" class="glass rounded-lg p-2 hover-lift">
+                        <i class="fas fa-question-circle text-purple-primary"></i>
+                    </button>
+                    <div class="glass rounded-lg p-2">
+                        <i class="fas fa-user text-purple-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Month View -->
+        <main id="month-view" class="p-6 pb-32 relative z-10">
+            <!-- Month Grid -->
+            <div class="glass-heavy rounded-2xl p-6 max-w-7xl mx-auto glow-purple">
+                <!-- Week Header -->
+                <div class="grid grid-cols-7 gap-4 mb-4">
+                    <div class="text-center font-semibold text-gray-700 p-2">Monday</div>
+                    <div class="text-center font-semibold text-gray-700 p-2">Tuesday</div>
+                    <div class="text-center font-semibold text-gray-700 p-2">Wednesday</div>
+                    <div class="text-center font-semibold text-gray-700 p-2">Thursday</div>
+                    <div class="text-center font-semibold text-gray-700 p-2">Friday</div>
+                    <div class="text-center font-semibold text-gray-700 p-2">Saturday</div>
+                    <div class="text-center font-semibold text-gray-700 p-2">Sunday</div>
+                </div>
+                
+                <!-- Calendar Grid -->
+                <div class="grid grid-cols-7 gap-4">
+                    <!-- Week 1 -->
+                    <div class="calendar-cell glass rounded-xl p-4 cursor-pointer" data-date="2025-08-01">
+                        <div class="text-right text-sm text-gray-400 mb-2">1</div>
+                        <div class="space-y-1">
+                            <div class="flex gap-1">
+                                <div class="w-3 h-3 task-medium rounded-full"></div>
+                                <div class="w-3 h-3 task-low rounded-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="calendar-cell glass rounded-xl p-4 cursor-pointer" data-date="2025-08-02">
+                        <div class="text-right text-sm text-gray-400 mb-2">2</div>
+                    </div>
+                    <div class="calendar-cell glass rounded-xl p-4 cursor-pointer" data-date="2025-08-03">
+                        <div class="text-right text-sm text-gray-400 mb-2">3</div>
+                        <div class="space-y-1">
+                            <div class="flex gap-1">
+                                <div class="w-3 h-3 task-high rounded-full"></div>
+                                <div class="text-xs text-gray-500">+1</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="calendar-cell glass rounded-xl p-4 cursor-pointer" data-date="2025-08-04">
+                        <div class="text-right text-sm text-gray-400 mb-2">4</div>
+                    </div>
+                    <div class="calendar-cell glass rounded-xl p-4 cursor-pointer" data-date="2025-08-05">
+                        <div class="text-right text-sm text-gray-400 mb-2">5</div>
+                        <div class="space-y-1">
+                            <div class="flex gap-1">
+                                <div class="w-3 h-3 task-low rounded-full"></div>
+                                <div class="w-3 h-3 task-medium rounded-full"></div>
+                                <div class="w-3 h-3 task-high rounded-full"></div>
+                                <div class="text-xs text-gray-500">+2</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="calendar-cell glass rounded-xl p-4 cursor-pointer" data-date="2025-08-06">
+                        <div class="text-right text-sm text-gray-400 mb-2">6</div>
+                    </div>
+                    <div class="calendar-cell glass rounded-xl p-4 cursor-pointer" data-date="2025-08-07">
+                        <div class="text-right text-sm text-gray-400 mb-2">7</div>
+                        <div class="space-y-1">
+                            <div class="flex gap-1">
+                                <div class="w-3 h-3 task-medium rounded-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Additional weeks would continue here -->
+                    <div class="calendar-cell glass rounded-xl p-4 cursor-pointer" data-date="2025-08-08">
+                        <div class="text-right text-sm text-gray-400 mb-2">8</div>
+                    </div>
+                    <div class="calendar-cell glass rounded-xl p-4 cursor-pointer" data-date="2025-08-09">
+                        <div class="text-right text-sm text-gray-400 mb-2">9</div>
+                        <div class="space-y-1">
+                            <div class="flex gap-1">
+                                <div class="w-3 h-3 task-high rounded-full"></div>
+                                <div class="w-3 h-3 task-low rounded-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="calendar-cell glass rounded-xl p-4 cursor-pointer" data-date="2025-08-10">
+                        <div class="text-right text-sm text-gray-400 mb-2">10</div>
+                    </div>
+                    <div class="calendar-cell glass rounded-xl p-4 cursor-pointer" data-date="2025-08-11">
+                        <div class="text-right text-sm text-gray-400 mb-2">11</div>
+                    </div>
+                    <div class="calendar-cell glass rounded-xl p-4 cursor-pointer" data-date="2025-08-12">
+                        <div class="text-right text-sm text-gray-400 mb-2">12</div>
+                        <div class="space-y-1">
+                            <div class="flex gap-1">
+                                <div class="w-3 h-3 task-medium rounded-full"></div>
+                                <div class="w-3 h-3 task-medium rounded-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="calendar-cell glass rounded-xl p-4 cursor-pointer" data-date="2025-08-13">
+                        <div class="text-right text-sm text-gray-400 mb-2">13</div>
+                    </div>
+                    <div class="calendar-cell glass rounded-xl p-4 cursor-pointer" data-date="2025-08-14">
+                        <div class="text-right text-sm text-gray-400 mb-2">14</div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Notes Drawer -->
+        <div id="notes-drawer" class="fixed bottom-0 left-0 right-0 z-30 transition-all duration-300">
+            <!-- Drawer Handle -->
+            <div class="drawer-handle cursor-pointer p-3 rounded-t-xl mx-6 flex items-center justify-center gap-2">
+                <div class="flex gap-1">
+                    <div class="w-1 h-4 bg-white/60 rounded-full"></div>
+                    <div class="w-1 h-4 bg-white/60 rounded-full"></div>
+                    <div class="w-1 h-4 bg-white/60 rounded-full"></div>
+                </div>
+                <span class="text-white font-medium">Notes</span>
+                <span class="bg-white/20 text-white text-xs px-2 py-1 rounded-full">3</span>
+            </div>
+            
+            <!-- Drawer Content -->
+            <div class="glass-heavy border-t border-gray-200 p-6">
+                <!-- Composition Area -->
+                <div class="mb-6">
+                    <div class="flex gap-4 mb-4">
+                        <input 
+                            type="text" 
+                            placeholder="Task title..."
+                            class="flex-1 glass rounded-lg p-3 border-0 focus:outline-none focus:ring-2 focus:ring-purple-primary"
+                        >
+                        <select class="glass rounded-lg p-3 border-0 focus:outline-none focus:ring-2 focus:ring-purple-primary">
+                            <option>Low</option>
+                            <option>Medium</option>
+                            <option>High</option>
+                        </select>
+                        <button class="gradient-primary text-white px-6 py-3 rounded-lg hover-lift font-medium">
+                            Add Note
+                        </button>
+                    </div>
+                    <textarea 
+                        placeholder="Optional description..."
+                        class="w-full glass rounded-lg p-3 border-0 focus:outline-none focus:ring-2 focus:ring-purple-primary resize-none"
+                        rows="2"
+                    ></textarea>
+                </div>
+                
+                <!-- Notes List -->
+                <div class="space-y-3">
+                    <!-- Note Item 1 -->
+                    <div class="glass rounded-lg p-4 hover-lift drag-handle flex items-center gap-4">
+                        <div class="cursor-grab">
+                            <i class="fas fa-grip-vertical text-gray-400"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-800">Review quarterly reports</div>
+                            <div class="text-sm text-gray-600">Check financial metrics and team performance</div>
+                        </div>
+                        <div class="task-high w-3 h-3 rounded-full"></div>
+                        <input type="checkbox" class="w-4 h-4 text-purple-primary">
+                        <button class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Note Item 2 -->
+                    <div class="glass rounded-lg p-4 hover-lift drag-handle flex items-center gap-4">
+                        <div class="cursor-grab">
+                            <i class="fas fa-grip-vertical text-gray-400"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-800">Team meeting preparation</div>
+                        </div>
+                        <div class="task-medium w-3 h-3 rounded-full"></div>
+                        <input type="checkbox" class="w-4 h-4 text-purple-primary">
+                        <button class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Note Item 3 -->
+                    <div class="glass rounded-lg p-4 hover-lift drag-handle flex items-center gap-4">
+                        <div class="cursor-grab">
+                            <i class="fas fa-grip-vertical text-gray-400"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="font-medium text-gray-800">Update project documentation</div>
+                        </div>
+                        <div class="task-low w-3 h-3 rounded-full"></div>
+                        <input type="checkbox" class="w-4 h-4 text-purple-primary">
+                        <button class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Day View Overlay -->
+    <div id="day-view" class="hidden fixed inset-0 z-40 overlay">
+        <div class="slide-up glass-heavy rounded-t-2xl absolute bottom-0 left-0 right-0 h-5/6 overflow-hidden">
+            <!-- Day View Header -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                <button class="text-purple-primary hover:bg-purple-50 p-2 rounded-lg">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <h2 class="text-xl font-semibold text-gray-800">Aug 18, 2025 (Mon)</h2>
+                <div class="flex gap-2">
+                    <button class="text-purple-primary hover:bg-purple-50 p-2 rounded-lg">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <button id="close-day-view" class="text-gray-400 hover:text-gray-600 p-2 rounded-lg">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Unscheduled Tasks -->
+            <div class="p-6 border-b border-gray-200">
+                <h3 class="text-sm font-semibold text-gray-600 mb-3">Unscheduled</h3>
+                <div class="flex gap-2 flex-wrap">
+                    <div class="glass rounded-lg px-3 py-2 text-sm hover-lift cursor-pointer">
+                        <span class="task-medium w-2 h-2 rounded-full inline-block mr-2"></span>
+                        Team standup
+                    </div>
+                    <div class="glass rounded-lg px-3 py-2 text-sm hover-lift cursor-pointer">
+                        <span class="task-low w-2 h-2 rounded-full inline-block mr-2"></span>
+                        Email review
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Timeline -->
+            <div class="overflow-y-auto h-full p-6">
+                <div class="space-y-1">
+                    <!-- Hour rows -->
+                    <div class="hour-row flex items-center p-3 rounded-lg hover:bg-purple-50 cursor-pointer" data-hour="9">
+                        <div class="w-16 text-sm text-gray-600 font-medium">9:00</div>
+                        <div class="flex-1 border-t border-gray-200 mx-4"></div>
+                        <div class="flex-1">
+                            <div class="task-block rounded-lg p-3 mr-4">
+                                <div class="font-medium text-sm">Project kickoff meeting</div>
+                                <div class="text-xs text-gray-600">9:00 - 10:00</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="hour-row flex items-center p-3 rounded-lg hover:bg-purple-50 cursor-pointer" data-hour="10">
+                        <div class="w-16 text-sm text-gray-600 font-medium">10:00</div>
+                        <div class="flex-1 border-t border-gray-200 mx-4"></div>
+                        <div class="flex-1"></div>
+                    </div>
+                    
+                    <div class="hour-row flex items-center p-3 rounded-lg hover:bg-purple-50 cursor-pointer" data-hour="11">
+                        <div class="w-16 text-sm text-gray-600 font-medium">11:00</div>
+                        <div class="flex-1 border-t border-gray-200 mx-4"></div>
+                        <div class="flex-1"></div>
+                    </div>
+                    
+                    <div class="hour-row flex items-center p-3 rounded-lg hover:bg-purple-50 cursor-pointer" data-hour="12">
+                        <div class="w-16 text-sm text-gray-600 font-medium">12:00</div>
+                        <div class="flex-1 border-t border-gray-200 mx-4"></div>
+                        <div class="flex-1"></div>
+                    </div>
+                    
+                    <div class="hour-row flex items-center p-3 rounded-lg hover:bg-purple-50 cursor-pointer" data-hour="13">
+                        <div class="w-16 text-sm text-gray-600 font-medium">13:00</div>
+                        <div class="flex-1 border-t border-gray-200 mx-4"></div>
+                        <div class="flex-1">
+                            <div class="task-block rounded-lg p-3 mr-4">
+                                <div class="font-medium text-sm">Lunch break</div>
+                                <div class="text-xs text-gray-600">13:00 - 14:00</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="hour-row flex items-center p-3 rounded-lg hover:bg-purple-50 cursor-pointer" data-hour="14">
+                        <div class="w-16 text-sm text-gray-600 font-medium">14:00</div>
+                        <div class="flex-1 border-t border-gray-200 mx-4"></div>
+                        <div class="flex-1"></div>
+                    </div>
+                    
+                    <div class="hour-row flex items-center p-3 rounded-lg hover:bg-purple-50 cursor-pointer" data-hour="15">
+                        <div class="w-16 text-sm text-gray-600 font-medium">15:00</div>
+                        <div class="flex-1 border-t border-gray-200 mx-4"></div>
+                        <div class="flex-1">
+                            <div class="task-block rounded-lg p-3 mr-4">
+                                <div class="font-medium text-sm">Client presentation</div>
+                                <div class="text-xs text-gray-600">15:00 - 16:30</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hour View Overlay -->
+    <div id="hour-view" class="hidden fixed inset-0 z-50 overlay">
+        <div class="slide-up glass-heavy rounded-t-2xl absolute bottom-0 left-0 right-0 h-4/5">
+            <!-- Hour View Header -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                <button class="text-purple-primary hover:bg-purple-50 p-2 rounded-lg">
+                    <i class="fas fa-chevron-left"></i>
+                </button>
+                <h2 class="text-xl font-semibold text-gray-800">Aug 18, 2025 • 09:00–09:59</h2>
+                <div class="flex gap-2">
+                    <button class="text-purple-primary hover:bg-purple-50 p-2 rounded-lg">
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                    <button id="close-hour-view" class="text-gray-400 hover:text-gray-600 p-2 rounded-lg">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- 15-minute Grid -->
+            <div class="p-6">
+                <div class="grid grid-cols-4 gap-4 h-80">
+                    <!-- 9:00 -->
+                    <div class="glass rounded-xl p-4 cursor-pointer hover-lift flex flex-col">
+                        <div class="text-sm font-semibold text-gray-700 mb-2">9:00</div>
+                        <div class="flex-1 flex items-center justify-center">
+                            <div class="task-block w-full rounded-lg p-3 text-center">
+                                <div class="font-medium text-sm">Kickoff prep</div>
+                                <div class="text-xs text-gray-600 mt-1">9:00-9:15</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 9:15 -->
+                    <div class="glass rounded-xl p-4 cursor-pointer hover-lift flex flex-col">
+                        <div class="text-sm font-semibold text-gray-700 mb-2">9:15</div>
+                        <div class="flex-1 flex items-center justify-center text-gray-400 text-sm">
+                            Available
+                        </div>
+                    </div>
+                    
+                    <!-- 9:30 -->
+                    <div class="glass rounded-xl p-4 cursor-pointer hover-lift flex flex-col">
+                        <div class="text-sm font-semibold text-gray-700 mb-2">9:30</div>
+                        <div class="flex-1 flex items-center justify-center text-gray-400 text-sm">
+                            Available
+                        </div>
+                    </div>
+                    
+                    <!-- 9:45 -->
+                    <div class="glass rounded-xl p-4 cursor-pointer hover-lift flex flex-col">
+                        <div class="text-sm font-semibold text-gray-700 mb-2">9:45</div>
+                        <div class="flex-1 flex items-center justify-center text-gray-400 text-sm">
+                            Available
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Guided Walkthrough -->
+    <div id="walkthrough-overlay" class="hidden fixed inset-0 z-50 walkthrough-overlay">
+        <div class="relative h-full">
+            <!-- Coachmark -->
+            <div id="coachmark" class="coachmark absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-2xl p-6 max-w-md text-center glow-heavy">
+                <h3 class="text-xl font-semibold text-gray-800 mb-3">This is your Month</h3>
+                <p class="text-gray-600 mb-6">Click any date to zoom into the Day.</p>
+                <div class="flex gap-3 justify-center">
+                    <button id="walkthrough-skip" class="glass rounded-lg px-4 py-2 text-gray-600 hover-lift">
+                        Skip
+                    </button>
+                    <button id="walkthrough-next" class="gradient-primary text-white px-6 py-2 rounded-lg hover-lift">
+                        Next
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed top-6 right-6 z-60 space-y-2">
+        <!-- Toast will be dynamically inserted here -->
+    </div>
+
+    <script>
+        (function() {
+            // Application State
+            let currentView = 'landing';
+            let walkthroughStep = 0;
+            let drawerState = 'collapsed'; // collapsed, partial, full
+            
+            // Initialize app
+            function init() {
+                // Check if user should see walkthrough
+                const walkthroughDone = localStorage.getItem('timeblock_walkthrough_done');
+                
+                // Event listeners
+                setupEventListeners();
+                
+                // Show landing page initially
+                showLandingPage();
+            }
+            
+            function setupEventListeners() {
+                // Landing page Google sign up
+                document.querySelector('#landing-page button').addEventListener('click', () => {
+                    showMainApp();
+                });
+                
+                // Landing page email sign up
+                document.querySelector('#landing-page button:nth-of-type(2)').addEventListener('click', () => {
+                    showMainApp();
+                });
+                
+                // Calendar cell clicks
+                document.addEventListener('click', (e) => {
+                    if (e.target.closest('.calendar-cell')) {
+                        const dateCell = e.target.closest('.calendar-cell');
+                        const date = dateCell.dataset.date;
+                        showDayView(date);
+                    }
+                });
+                
+                // Hour row clicks
+                document.addEventListener('click', (e) => {
+                    if (e.target.closest('.hour-row')) {
+                        const hourRow = e.target.closest('.hour-row');
+                        const hour = hourRow.dataset.hour;
+                        showHourView(hour);
+                    }
+                });
+                
+                // Close overlay buttons
+                document.getElementById('close-day-view').addEventListener('click', () => {
+                    document.getElementById('day-view').classList.add('hidden');
+                });
+                
+                document.getElementById('close-hour-view').addEventListener('click', () => {
+                    document.getElementById('hour-view').classList.add('hidden');
+                });
+                
+                // Help button - trigger walkthrough
+                document.getElementById('help-btn').addEventListener('click', () => {
+                    startWalkthrough();
+                });
+                
+                // Walkthrough controls
+                document.getElementById('walkthrough-next').addEventListener('click', () => {
+                    nextWalkthroughStep();
+                });
+                
+                document.getElementById('walkthrough-skip').addEventListener('click', () => {
+                    endWalkthrough();
+                });
+                
+                // Drawer toggle
+                document.querySelector('.drawer-handle').addEventListener('click', () => {
+                    toggleDrawer();
+                });
+                
+                // Add note button
+                document.querySelector('#notes-drawer button:last-of-type').addEventListener('click', () => {
+                    addNote();
+                });
+                
+                // Keyboard navigation
+                document.addEventListener('keydown', handleKeyboard);
+                
+                // Drag and drop setup
+                setupDragAndDrop();
+            }
+            
+            function showLandingPage() {
+                document.getElementById('landing-page').classList.remove('hidden');
+                document.getElementById('main-app').classList.add('hidden');
+                currentView = 'landing';
+            }
+            
+            function showMainApp() {
+                document.getElementById('landing-page').classList.add('hidden');
+                document.getElementById('main-app').classList.remove('hidden');
+                currentView = 'month';
+                
+                // Check if walkthrough should be shown
+                const walkthroughDone = localStorage.getItem('timeblock_walkthrough_done');
+                if (!walkthroughDone) {
+                    setTimeout(() => startWalkthrough(), 500);
+                }
+            }
+            
+            function showDayView(date) {
+                document.getElementById('day-view').classList.remove('hidden');
+                updateBreadcrumb(`${formatDate(date)} • Day`);
+                currentView = 'day';
+                showToast('Day view opened');
+            }
+            
+            function showHourView(hour) {
+                document.getElementById('hour-view').classList.remove('hidden');
+                updateBreadcrumb(`Aug 18, 2025 • ${hour}:00–${hour}:59`);
+                currentView = 'hour';
+                showToast('Hour view opened');
+            }
+            
+            function updateBreadcrumb(text) {
+                document.getElementById('breadcrumb').textContent = text;
+            }
+            
+            function formatDate(dateStr) {
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                });
+            }
+            
+            function startWalkthrough() {
+                walkthroughStep = 0;
+                document.getElementById('walkthrough-overlay').classList.remove('hidden');
+                showWalkthroughStep();
+            }
+            
+            function showWalkthroughStep() {
+                const coachmark = document.getElementById('coachmark');
+                const steps = [
+                    {
+                        title: 'This is your Month',
+                        content: 'Click any date to zoom into the Day.',
+                        position: { top: '50%', left: '50%' }
+                    },
+                    {
+                        title: 'Your Notes Drawer',
+                        content: 'Write first, organize later.',
+                        position: { top: '20%', left: '50%' }
+                    },
+                    {
+                        title: 'Drag & Drop',
+                        content: 'Drag a note onto a date to schedule it.',
+                        position: { top: '60%', left: '30%' }
+                    }
+                ];
+                
+                if (walkthroughStep < steps.length) {
+                    const step = steps[walkthroughStep];
+                    coachmark.querySelector('h3').textContent = step.title;
+                    coachmark.querySelector('p').textContent = step.content;
+                    
+                    // Position coachmark
+                    coachmark.style.top = step.position.top;
+                    coachmark.style.left = step.position.left;
+                }
+            }
+            
+            function nextWalkthroughStep() {
+                walkthroughStep++;
+                if (walkthroughStep >= 3) {
+                    endWalkthrough();
+                } else {
+                    showWalkthroughStep();
+                }
+            }
+            
+            function endWalkthrough() {
+                document.getElementById('walkthrough-overlay').classList.add('hidden');
+                localStorage.setItem('timeblock_walkthrough_done', 'true');
+                showToast('Walkthrough completed');
+            }
+            
+            function toggleDrawer() {
+                const drawer = document.getElementById('notes-drawer');
+                const content = drawer.querySelector('.glass-heavy');
+                
+                if (drawerState === 'collapsed') {
+                    content.style.maxHeight = '300px';
+                    drawerState = 'partial';
+                } else if (drawerState === 'partial') {
+                    content.style.maxHeight = '60vh';
+                    drawerState = 'full';
+                } else {
+                    content.style.maxHeight = '0';
+                    drawerState = 'collapsed';
+                }
+                
+                showToast(`Drawer ${drawerState}`);
+            }
+            
+            function addNote() {
+                const titleInput = document.querySelector('#notes-drawer input[type="text"]');
+                const descInput = document.querySelector('#notes-drawer textarea');
+                const prioritySelect = document.querySelector('#notes-drawer select');
+                
+                if (titleInput.value.trim()) {
+                    // Create note element (simplified for demo)
+                    showToast('Note added successfully');
+                    titleInput.value = '';
+                    descInput.value = '';
+                    
+                    // Auto-expand drawer if collapsed
+                    if (drawerState === 'collapsed') {
+                        toggleDrawer();
+                    }
+                } else {
+                    showToast('Please enter a note title', 'error');
+                }
+            }
+            
+            function setupDragAndDrop() {
+                // Add drag event listeners to note items
+                const noteItems = document.querySelectorAll('.drag-handle');
+                
+                noteItems.forEach(item => {
+                    item.addEventListener('dragstart', (e) => {
+                        e.dataTransfer.setData('text/plain', item.textContent);
+                        item.style.opacity = '0.5';
+                        showToast('Drag started');
+                    });
+                    
+                    item.addEventListener('dragend', (e) => {
+                        item.style.opacity = '1';
+                    });
+                    
+                    item.draggable = true;
+                });
+                
+                // Add drop zones
+                const calendarCells = document.querySelectorAll('.calendar-cell');
+                const hourRows = document.querySelectorAll('.hour-row');
+                
+                [...calendarCells, ...hourRows].forEach(dropZone => {
+                    dropZone.addEventListener('dragover', (e) => {
+                        e.preventDefault();
+                        dropZone.style.backgroundColor = 'rgba(139, 92, 246, 0.1)';
+                    });
+                    
+                    dropZone.addEventListener('dragleave', (e) => {
+                        dropZone.style.backgroundColor = '';
+                    });
+                    
+                    dropZone.addEventListener('drop', (e) => {
+                        e.preventDefault();
+                        dropZone.style.backgroundColor = '';
+                        
+                        const noteData = e.dataTransfer.getData('text/plain');
+                        showToast(`Task scheduled: ${noteData}`);
+                    });
+                });
+            }
+            
+            function handleKeyboard(e) {
+                // ESC to close overlays
+                if (e.key === 'Escape') {
+                    if (!document.getElementById('day-view').classList.contains('hidden')) {
+                        document.getElementById('day-view').classList.add('hidden');
+                    } else if (!document.getElementById('hour-view').classList.contains('hidden')) {
+                        document.getElementById('hour-view').classList.add('hidden');
+                    } else if (!document.getElementById('walkthrough-overlay').classList.contains('hidden')) {
+                        endWalkthrough();
+                    }
+                }
+                
+                // Enter to add note
+                if (e.key === 'Enter' && e.target.tagName === 'INPUT' && e.target.type === 'text') {
+                    addNote();
+                }
+            }
+            
+            function showToast(message, type = 'success') {
+                const toast = document.createElement('div');
+                toast.className = `glass-heavy rounded-lg p-4 text-sm font-medium glow-purple fade-in`;
+                toast.textContent = message;
+                
+                if (type === 'error') {
+                    toast.style.borderLeft = '4px solid #EF4444';
+                } else {
+                    toast.style.borderLeft = '4px solid #8B5CF6';
+                }
+                
+                document.getElementById('toast-container').appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.remove();
+                }, 3000);
+            }
+            
+            // Initialize the application
+            init();
+        })();
+    </script>
+</body>
+</html>

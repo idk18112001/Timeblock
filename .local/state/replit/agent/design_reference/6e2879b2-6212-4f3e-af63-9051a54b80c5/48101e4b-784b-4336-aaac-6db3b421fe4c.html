@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeBlock - Dump First, Organize Later</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+        theme: {
+            extend: {
+                colors: {
+                    purple: {
+                        primary: '#8B5CF6',
+                        light: 'rgba(139,92,246,0.28)',
+                        ring: 'rgba(139,92,246,0.6)'
+                    },
+                    priority: {
+                        low: '#34D399',
+                        medium: '#FACC15',
+                        high: '#EF4444'
+                    }
+                },
+                fontFamily: {
+                    'inter': ['Inter', 'system-ui', 'sans-serif']
+                },
+                backdropBlur: {
+                    'glass': '12px'
+                }
+            }
+        }
+    };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        .gradient-burst {
+            background: linear-gradient(135deg, rgba(139,92,246,0.08) 0%, transparent 60%);
+        }
+        
+        .glass-surface {
+            background: rgba(255,255,255,0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        
+        .hover-lift:hover {
+            transform: translateY(-2px) scale(1.02);
+            box-shadow: 0 10px 25px rgba(139,92,246,0.15);
+        }
+        
+        .focus-ring:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px rgba(139,92,246,0.6), 0 0 0 4px rgba(139,92,246,0.2);
+        }
+        
+        .drag-handle {
+            cursor: grab;
+        }
+        
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+        
+        .task-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .drawer-handle {
+            background: linear-gradient(90deg, transparent 40%, #8B5CF6 50%, transparent 60%);
+            height: 4px;
+        }
+    </style>
+</head>
+<body class="font-inter bg-white min-h-screen">
+    <!-- Landing Page Section -->
+    <div id="landingPage" class="min-h-screen flex">
+        <!-- Gradient Burst Background -->
+        <div class="fixed inset-0 gradient-burst pointer-events-none"></div>
+        
+        <!-- Left Panel - Sign Up -->
+        <div class="w-1/2 flex flex-col justify-center items-center p-12 relative z-10">
+            <!-- @COMPONENT: Logo -->
+            <div class="mb-8">
+                <h1 class="text-4xl font-semibold bg-gradient-to-r from-purple-primary to-purple-600 bg-clip-text text-transparent">
+                    TimeBlock
+                </h1>
+            </div>
+            <!-- @END_COMPONENT: Logo -->
+            
+            <!-- @COMPONENT: HeroSection -->
+            <div class="text-center mb-12 max-w-md">
+                <h2 class="text-4xl font-semibold text-gray-900 mb-4 leading-tight">
+                    Dump First, Organize Later
+                </h2>
+                <p class="text-gray-600 text-lg">
+                    Capture tasks now. Arrange them when you're ready.
+                </p>
+            </div>
+            <!-- @END_COMPONENT: HeroSection -->
+            
+            <!-- @COMPONENT: SignUpForm -->
+            <div class="w-full max-w-sm space-y-4">
+                <!-- Google Sign Up Button -->
+                <button class="w-full glass-surface border border-gray-200 rounded-xl px-6 py-3 flex items-center justify-center space-x-3 hover-lift transition-all duration-200 focus-ring" data-event="click:handleGoogleSignUp">
+                    <i class="fab fa-google text-red-500"></i>
+                    <span class="font-medium text-gray-700">Sign up with Google</span>
+                </button>
+                
+                <!-- Email Form -->
+                <div class="flex space-x-2">
+                    <input 
+                        type="email" 
+                        placeholder="Enter your email" 
+                        class="flex-1 px-4 py-3 border border-gray-200 rounded-xl focus-ring transition-all duration-200"
+                        data-mock="true"
+                    >
+                    <button class="px-6 py-3 bg-purple-primary text-white rounded-xl hover-lift transition-all duration-200 focus-ring font-medium" data-event="click:handleEmailSignUp">
+                        Sign Up
+                    </button>
+                </div>
+                
+                <!-- Sign In Link -->
+                <p class="text-center text-sm text-gray-600">
+                    Already have an account? 
+                    <a href="#" class="text-purple-primary font-medium hover:underline" data-event="click:showSignIn">Sign In</a>
+                </p>
+            </div>
+            <!-- @END_COMPONENT: SignUpForm -->
+            
+            <!-- Legal Links -->
+            <div class="absolute bottom-8 left-8 flex space-x-4 text-xs text-gray-400">
+                <a href="#" class="hover:text-gray-600 transition-colors">Terms</a>
+                <a href="#" class="hover:text-gray-600 transition-colors">Privacy</a>
+            </div>
+        </div>
+        
+        <!-- Right Panel - Feature Showcase -->
+        <div class="w-1/2 flex items-center justify-center p-12 relative">
+            <!-- @COMPONENT: FeatureCarousel -->
+            <div class="relative w-full max-w-lg">
+                <div class="glass-surface rounded-3xl p-8 shadow-2xl">
+                    <div id="carousel" class="space-y-6">
+                        <!-- Slide 1 - 3-Level Navigation -->
+                        <div class="carousel-slide active">
+                            <div class="bg-white rounded-2xl p-6 shadow-lg">
+                                <div class="flex items-center space-x-2 mb-4">
+                                    <div class="w-3 h-3 bg-red-400 rounded-full"></div>
+                                    <div class="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                                    <div class="w-3 h-3 bg-green-400 rounded-full"></div>
+                                </div>
+                                <div class="space-y-2">
+                                    <div class="text-lg font-semibold text-gray-800">Month → Day → Hour</div>
+                                    <div class="text-gray-600 text-sm">No extra buttons. Just click through.</div>
+                                    <div class="grid grid-cols-7 gap-1 mt-4">
+                                        <!-- Mock calendar grid -->
+                                        <!-- @MAP: Array(21).fill().map((_, i) => ( -->
+                                        <div class="aspect-square bg-gray-50 rounded text-xs flex items-center justify-center hover:bg-purple-50 cursor-pointer" data-mock="true">
+                                            <span data-mock="true">15</span>
+                                        </div>
+                                        <!-- @END_MAP )) -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-center space-x-2 mt-6">
+                        <!-- @MAP: [0,1,2,3].map(i => ( -->
+                        <button class="w-2 h-2 rounded-full bg-purple-primary opacity-30 hover:opacity-100 transition-opacity" data-carousel-dot="0"></button>
+                        <!-- @END_MAP )) -->
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: FeatureCarousel -->
+        </div>
+    </div>
+    
+    <!-- Main App Interface -->
+    <div id="appInterface" class="min-h-screen hidden">
+        <!-- App Header -->
+        <!-- @COMPONENT: AppHeader -->
+        <header class="glass-surface border-b border-gray-200 px-6 py-4 sticky top-0 z-40">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-xl font-semibold bg-gradient-to-r from-purple-primary to-purple-600 bg-clip-text text-transparent">
+                        TimeBlock
+                    </h1>
+                </div>
+                
+                <div class="flex items-center space-x-6">
+                    <div class="text-center">
+                        <div class="text-lg font-semibold text-gray-800" data-bind="currentMonth">August 2025</div>
+                        <div class="text-sm text-gray-500">Month</div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button class="p-2 text-gray-600 hover:text-purple-primary transition-colors focus-ring rounded-lg" data-event="click:showWalkthrough" title="Help">
+                        <i class="fas fa-question-circle"></i>
+                    </button>
+                    <div class="w-8 h-8 bg-purple-primary rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-white text-sm"></i>
+                    </div>
+                </div>
+            </div>
+        </header>
+        <!-- @END_COMPONENT: AppHeader -->
+        
+        <!-- Main Calendar Area -->
+        <main class="flex-1 relative" style="height: calc(100vh - 80px - 120px);">
+            <!-- Month View -->
+            <!-- @COMPONENT: MonthView -->
+            <div id="monthView" class="p-6 h-full">
+                <div class="gradient-burst absolute inset-0 pointer-events-none"></div>
+                
+                <!-- Calendar Header -->
+                <div class="grid grid-cols-7 gap-4 mb-4 relative z-10">
+                    <!-- @MAP: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => ( -->
+                    <div class="text-center text-sm font-medium text-gray-600 py-2" data-mock="true">Mon</div>
+                    <!-- @END_MAP )) -->
+                </div>
+                
+                <!-- Calendar Grid -->
+                <div class="grid grid-cols-7 gap-4 h-full relative z-10">
+                    <!-- @MAP: Array(35).fill().map((_, i) => ( -->
+                    <div class="bg-white border border-gray-200 rounded-xl p-3 hover-lift transition-all duration-200 cursor-pointer focus-ring min-h-24 relative" 
+                         tabindex="0" 
+                         data-event="click:openDayView"
+                         data-date="2025-08-15"
+                         aria-label="August 15, 2025"
+                         data-mock="true">
+                        <div class="text-sm font-medium text-gray-400 absolute top-2 right-2" data-mock="true">15</div>
+                        <div class="mt-6 space-y-1">
+                            <!-- Task indicators -->
+                            <div class="flex items-center space-x-1">
+                                <div class="task-dot bg-priority-high" data-mock="true"></div>
+                                <div class="task-dot bg-priority-medium" data-mock="true"></div>
+                                <div class="task-dot bg-priority-low" data-mock="true"></div>
+                                <span class="text-xs text-gray-500" data-mock="true">+2</span>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- @END_MAP )) -->
+                </div>
+                
+                <!-- Empty State -->
+                <div class="absolute inset-0 flex items-center justify-center text-gray-500 text-lg pointer-events-none z-0">
+                    <div class="text-center">
+                        <i class="fas fa-calendar-plus text-4xl mb-4 text-gray-300"></i>
+                        <p>Pull up your Notes Drawer and drop your first task.</p>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: MonthView -->
+            
+            <!-- Day View Overlay -->
+            <!-- @COMPONENT: DayViewOverlay -->
+            <div id="dayViewOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+                <div class="absolute bottom-0 left-0 right-0 h-4/5 glass-surface rounded-t-3xl animate-slide-up">
+                    <!-- Day View Header -->
+                    <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                        <button class="p-2 text-gray-600 hover:text-purple-primary transition-colors focus-ring rounded-lg" data-event="click:previousDay">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <div class="text-center">
+                            <h2 class="text-xl font-semibold text-gray-800" data-bind="selectedDate">Aug 18, 2025 (Mon)</h2>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button class="p-2 text-gray-600 hover:text-purple-primary transition-colors focus-ring rounded-lg" data-event="click:nextDay">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                            <button class="p-2 text-gray-600 hover:text-purple-primary transition-colors focus-ring rounded-lg" data-event="click:closeDayView">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Unscheduled Tasks Strip -->
+                    <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                        <h3 class="text-sm font-medium text-gray-600 mb-2">Unscheduled</h3>
+                        <div class="flex flex-wrap gap-2">
+                            <!-- @MAP: unscheduledTasks.map(task => ( -->
+                            <div class="bg-white px-3 py-1 rounded-full text-sm border border-gray-200 cursor-move drag-handle hover-lift transition-all duration-200" data-mock="true" data-task-id="1">
+                                <span data-mock="true">Review presentation</span>
+                                <div class="inline-block w-2 h-2 bg-priority-high rounded-full ml-2"></div>
+                            </div>
+                            <!-- @END_MAP )) -->
+                        </div>
+                    </div>
+                    
+                    <!-- Day Timeline -->
+                    <div class="flex-1 overflow-y-auto p-6">
+                        <div class="space-y-1">
+                            <!-- @MAP: Array(24).fill().map((_, hour) => ( -->
+                            <div class="flex items-stretch border-b border-gray-100 min-h-16 hover:bg-gray-50 transition-colors cursor-pointer focus-ring" 
+                                 tabindex="0" 
+                                 data-event="click:openHourView"
+                                 data-hour="9"
+                                 data-mock="true">
+                                <div class="w-20 flex-shrink-0 p-3 text-sm text-gray-500 font-medium" data-mock="true">
+                                    9:00 AM
+                                </div>
+                                <div class="flex-1 p-3 relative">
+                                    <!-- Scheduled task block -->
+                                    <div class="absolute inset-y-1 left-2 right-2 bg-purple-100 border-l-4 border-purple-primary rounded-r-lg p-2 hover-lift transition-all duration-200 cursor-move drag-handle" data-mock="true" data-task-id="2">
+                                        <div class="text-sm font-medium text-gray-800" data-mock="true">Team standup</div>
+                                        <div class="text-xs text-gray-600" data-mock="true">9:00 - 10:00 AM</div>
+                                        <div class="absolute top-2 right-2">
+                                            <div class="w-2 h-2 bg-priority-medium rounded-full"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- @END_MAP )) -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: DayViewOverlay -->
+            
+            <!-- Hour View Overlay -->
+            <!-- @COMPONENT: HourViewOverlay -->
+            <div id="hourViewOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-60 hidden">
+                <div class="absolute bottom-0 left-0 right-0 h-3/5 glass-surface rounded-t-3xl animate-slide-up">
+                    <!-- Hour View Header -->
+                    <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                        <button class="p-2 text-gray-600 hover:text-purple-primary transition-colors focus-ring rounded-lg" data-event="click:previousHour">
+                            <i class="fas fa-chevron-left"></i>
+                        </button>
+                        <div class="text-center">
+                            <h2 class="text-lg font-semibold text-gray-800" data-bind="selectedHour">Aug 18, 2025 • 09:00–09:59</h2>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button class="p-2 text-gray-600 hover:text-purple-primary transition-colors focus-ring rounded-lg" data-event="click:nextHour">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                            <button class="p-2 text-gray-600 hover:text-purple-primary transition-colors focus-ring rounded-lg" data-event="click:closeHourView">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- 15-minute Grid -->
+                    <div class="flex-1 p-6">
+                        <div class="grid grid-cols-4 gap-4 h-full">
+                            <!-- @MAP: ['9:00', '9:15', '9:30', '9:45'].map((time, i) => ( -->
+                            <div class="bg-white border-2 border-dashed border-gray-200 rounded-xl p-4 hover:border-purple-primary hover:bg-purple-50 transition-all duration-200 cursor-pointer focus-ring relative" 
+                                 tabindex="0"
+                                 data-segment="15"
+                                 data-time="9:00"
+                                 data-mock="true">
+                                <div class="text-sm font-medium text-gray-600 mb-2" data-mock="true">9:00</div>
+                                <div class="text-xs text-gray-400" data-mock="true">15 min slot</div>
+                                
+                                <!-- Sample task in first slot -->
+                                <div class="absolute inset-2 bg-purple-primary rounded-lg p-2 text-white text-xs" data-mock="true" data-task-id="3" style="display: none;">
+                                    <div class="font-medium" data-mock="true">Quick call</div>
+                                    <div class="opacity-75" data-mock="true">9:00-9:15</div>
+                                </div>
+                            </div>
+                            <!-- @END_MAP )) -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: HourViewOverlay -->
+        </main>
+        
+        <!-- Persistent Notes Drawer -->
+        <!-- @COMPONENT: NotesDrawer -->
+        <div id="notesDrawer" class="fixed bottom-0 left-0 right-0 glass-surface border-t border-gray-200 z-30 transition-all duration-300" style="height: 120px;">
+            <!-- Drawer Handle -->
+            <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                <div class="bg-white rounded-full p-2 shadow-lg cursor-pointer hover-lift transition-all duration-200" data-event="click:toggleDrawer">
+                    <div class="drawer-handle w-8 rounded-full"></div>
+                    <div class="text-xs text-center mt-1 text-gray-500">
+                        <span data-bind="taskCount" data-mock="true">3</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Drawer Content -->
+            <div class="p-6 h-full flex flex-col">
+                <!-- Composition Area -->
+                <div class="flex items-center space-x-4 mb-4">
+                    <input 
+                        type="text" 
+                        placeholder="Add a new note..." 
+                        class="flex-1 px-4 py-2 border border-gray-200 rounded-xl focus-ring transition-all duration-200"
+                        data-mock="true"
+                        data-event="keypress:handleAddNote"
+                    >
+                    <select class="px-3 py-2 border border-gray-200 rounded-xl focus-ring text-sm" data-mock="true">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                    <button class="px-4 py-2 bg-purple-primary text-white rounded-xl hover-lift transition-all duration-200 focus-ring font-medium" data-event="click:addNote">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+                
+                <!-- Notes List -->
+                <div class="flex-1 overflow-y-auto">
+                    <div class="space-y-2">
+                        <!-- @MAP: notes.map(note => ( -->
+                        <div class="flex items-center space-x-3 bg-white p-3 rounded-lg border border-gray-200 hover-lift transition-all duration-200 cursor-move drag-handle group" data-mock="true" data-note-id="1">
+                            <div class="text-gray-400 group-hover:text-purple-primary transition-colors">
+                                <i class="fas fa-grip-vertical"></i>
+                            </div>
+                            <input type="checkbox" class="rounded border-gray-300 text-purple-primary focus:ring-purple-ring" data-mock="true">
+                            <div class="flex-1">
+                                <div class="font-medium text-gray-800" data-mock="true">Review Q3 budget proposal</div>
+                                <div class="text-sm text-gray-500" data-mock="true">Need to analyze costs and projections</div>
+                            </div>
+                            <div class="w-3 h-3 bg-priority-high rounded-full" data-mock="true"></div>
+                            <button class="p-1 text-gray-400 hover:text-gray-600 transition-colors focus-ring rounded" data-event="click:showNoteMenu" data-mock="true">
+                                <i class="fas fa-ellipsis-v text-sm"></i>
+                            </button>
+                        </div>
+                        <!-- @END_MAP )) -->
+                        
+                        <div class="flex items-center space-x-3 bg-white p-3 rounded-lg border border-gray-200 hover-lift transition-all duration-200 cursor-move drag-handle group opacity-60" data-mock="true" data-note-id="2">
+                            <div class="text-gray-400 group-hover:text-purple-primary transition-colors">
+                                <i class="fas fa-grip-vertical"></i>
+                            </div>
+                            <input type="checkbox" class="rounded border-gray-300 text-purple-primary focus:ring-purple-ring" checked data-mock="true">
+                            <div class="flex-1">
+                                <div class="font-medium text-gray-800 line-through" data-mock="true">Send follow-up emails</div>
+                            </div>
+                            <div class="w-3 h-3 bg-priority-low rounded-full" data-mock="true"></div>
+                            <button class="p-1 text-gray-400 hover:text-gray-600 transition-colors focus-ring rounded" data-event="click:showNoteMenu" data-mock="true">
+                                <i class="fas fa-ellipsis-v text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Empty State -->
+                    <div class="text-center text-gray-500 py-8 hidden" id="drawerEmptyState">
+                        <i class="fas fa-sticky-note text-2xl mb-2 text-gray-300"></i>
+                        <p class="text-sm">Write your first note below.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: NotesDrawer -->
+    </div>
+    
+    <!-- Guided Walkthrough Overlay -->
+    <!-- @COMPONENT: WalkthroughOverlay -->
+    <div id="walkthroughOverlay" class="fixed inset-0 bg-black bg-opacity-75 z-50 hidden">
+        <div class="absolute inset-0 flex items-center justify-center p-6">
+            <div class="glass-surface rounded-2xl p-8 max-w-md w-full text-center">
+                <div class="mb-6">
+                    <div class="w-16 h-16 bg-purple-primary rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-calendar-alt text-white text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-800 mb-2" data-bind="walkthroughTitle">Welcome to Month View</h3>
+                    <p class="text-gray-600" data-bind="walkthroughDescription">This is your Month. Click any date to zoom into the Day.</p>
+                </div>
+                
+                <div class="flex items-center justify-between">
+                    <button class="px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors focus-ring rounded-lg" data-event="click:skipWalkthrough">
+                        Skip
+                    </button>
+                    <div class="flex space-x-1">
+                        <!-- @MAP: Array(5).fill().map((_, i) => ( -->
+                        <div class="w-2 h-2 bg-purple-primary rounded-full opacity-30" data-mock="true"></div>
+                        <!-- @END_MAP )) -->
+                    </div>
+                    <button class="px-6 py-2 bg-purple-primary text-white rounded-lg hover-lift transition-all duration-200 focus-ring font-medium" data-event="click:nextWalkthroughStep">
+                        Next
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: WalkthroughOverlay -->
+    
+    <!-- Toast Notifications -->
+    <!-- @COMPONENT: ToastContainer -->
+    <div id="toastContainer" class="fixed top-6 right-6 z-60 space-y-2">
+        <div class="glass-surface border border-green-200 rounded-xl p-4 flex items-center space-x-3 shadow-lg transform translate-x-full transition-transform duration-300 hidden" id="successToast" data-mock="true">
+            <div class="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
+                <i class="fas fa-check text-white text-xs"></i>
+            </div>
+            <span class="text-green-800 font-medium" data-bind="toastMessage">Task scheduled for Aug 18.</span>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: ToastContainer -->
+
+    <script>
+        // TODO: Implement business logic, API calls, and state management
+        (function() {
+            // Application state management
+            let currentView = 'landing';
+            let walkthroughStep = 0;
+            let drawerExpanded = false;
+            
+            // Initialize app
+            function init() {
+                setupEventListeners();
+                checkWalkthroughStatus();
+            }
+            
+            function setupEventListeners() {
+                // Landing page interactions
+                document.addEventListener('click', function(e) {
+                    if (e.target.closest('[data-event]')) {
+                        const eventData = e.target.closest('[data-event]').getAttribute('data-event');
+                        const [eventType, handler] = eventData.split(':');
+                        
+                        if (eventType === 'click') {
+                            handleClick(handler, e);
+                        }
+                    }
+                });
+                
+                // Keyboard navigation
+                document.addEventListener('keydown', function(e) {
+                    if (e.key === 'Escape') {
+                        closeOverlays();
+                    }
+                });
+                
+                // Drag and drop setup
+                setupDragAndDrop();
+            }
+            
+            function handleClick(handler, event) {
+                switch(handler) {
+                    case 'handleGoogleSignUp':
+                        showLoadingState(event.target);
+                        setTimeout(() => {
+                            showApp();
+                        }, 1500);
+                        break;
+                        
+                    case 'handleEmailSignUp':
+                        validateEmailAndSignUp();
+                        break;
+                        
+                    case 'showSignIn':
+                        toggleSignInMode();
+                        break;
+                        
+                    case 'openDayView':
+                        openDayView(event.target.getAttribute('data-date'));
+                        break;
+                        
+                    case 'closeDayView':
+                        closeDayView();
+                        break;
+                        
+                    case 'openHourView':
+                        openHourView(event.target.getAttribute('data-hour'));
+                        break;
+                        
+                    case 'closeHourView':
+                        closeHourView();
+                        break;
+                        
+                    case 'toggleDrawer':
+                        toggleDrawer();
+                        break;
+                        
+                    case 'showWalkthrough':
+                        startWalkthrough();
+                        break;
+                        
+                    case 'nextWalkthroughStep':
+                        nextWalkthroughStep();
+                        break;
+                        
+                    case 'skipWalkthrough':
+                        skipWalkthrough();
+                        break;
+                        
+                    case 'addNote':
+                        addNewNote();
+                        break;
+                }
+            }
+            
+            function showLoadingState(button) {
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Signing up...';
+                button.disabled = true;
+            }
+            
+            function showApp() {
+                document.getElementById('landingPage').classList.add('hidden');
+                document.getElementById('appInterface').classList.remove('hidden');
+                currentView = 'app';
+                
+                // Check if should show walkthrough
+                if (!localStorage.getItem('timeblock_walkthrough_done')) {
+                    setTimeout(startWalkthrough, 500);
+                }
+            }
+            
+            function openDayView(date) {
+                document.getElementById('dayViewOverlay').classList.remove('hidden');
+                // Update header with selected date
+                // TODO: Format date properly
+            }
+            
+            function closeDayView() {
+                document.getElementById('dayViewOverlay').classList.add('hidden');
+            }
+            
+            function openHourView(hour) {
+                document.getElementById('hourViewOverlay').classList.remove('hidden');
+                // Update header with selected hour
+            }
+            
+            function closeHourView() {
+                document.getElementById('hourViewOverlay').classList.add('hidden');
+            }
+            
+            function toggleDrawer() {
+                const drawer = document.getElementById('notesDrawer');
+                if (drawerExpanded) {
+                    drawer.style.height = '120px';
+                    drawerExpanded = false;
+                } else {
+                    drawer.style.height = '300px';
+                    drawerExpanded = true;
+                }
+            }
+            
+            function startWalkthrough() {
+                walkthroughStep = 0;
+                document.getElementById('walkthroughOverlay').classList.remove('hidden');
+                updateWalkthroughContent();
+            }
+            
+            function nextWalkthroughStep() {
+                walkthroughStep++;
+                if (walkthroughStep >= 5) {
+                    completeWalkthrough();
+                } else {
+                    updateWalkthroughContent();
+                }
+            }
+            
+            function skipWalkthrough() {
+                completeWalkthrough();
+            }
+            
+            function completeWalkthrough() {
+                localStorage.setItem('timeblock_walkthrough_done', 'true');
+                document.getElementById('walkthroughOverlay').classList.add('hidden');
+            }
+            
+            function updateWalkthroughContent() {
+                const steps = [
+                    {
+                        title: "Welcome to Month View",
+                        description: "This is your Month. Click any date to zoom into the Day."
+                    },
+                    {
+                        title: "Your Notes Drawer",
+                        description: "Your Notes Drawer is always here. Write first, organize later."
+                    },
+                    {
+                        title: "Drag & Drop",
+                        description: "Drag a note onto a date to schedule it for that day."
+                    },
+                    {
+                        title: "Day View",
+                        description: "Here's your Day timeline. Drop tasks into hours to set times."
+                    },
+                    {
+                        title: "Hour View",
+                        description: "Fine-tune in 15‑minute blocks. Precise and fast."
+                    }
+                ];
+                
+                const step = steps[walkthroughStep];
+                if (step) {
+                    // TODO: Update walkthrough content dynamically
+                }
+            }
+            
+            function setupDragAndDrop() {
+                // TODO: Implement comprehensive drag and drop system
+                // This would include:
+                // - Draggable note items
+                // - Drop targets (calendar cells, hour rows, 15-min segments)
+                // - Visual feedback during drag
+                // - Success/error handling
+                // - Auto-scroll during drag near edges
+            }
+            
+            function addNewNote() {
+                const input = document.querySelector('[data-event*="handleAddNote"]');
+                if (input && input.value.trim()) {
+                    // TODO: Add note to list and clear input
+                    showToast('Note added! Drag it to schedule.');
+                }
+            }
+            
+            function showToast(message) {
+                const toast = document.getElementById('successToast');
+                const messageEl = toast.querySelector('[data-bind="toastMessage"]');
+                messageEl.textContent = message;
+                toast.classList.remove('hidden', 'translate-x-full');
+                
+                setTimeout(() => {
+                    toast.classList.add('translate-x-full');
+                    setTimeout(() => {
+                        toast.classList.add('hidden');
+                    }, 300);
+                }, 3000);
+            }
+            
+            function closeOverlays() {
+                document.getElementById('dayViewOverlay').classList.add('hidden');
+                document.getElementById('hourViewOverlay').classList.add('hidden');
+                document.getElementById('walkthroughOverlay').classList.add('hidden');
+            }
+            
+            function checkWalkthroughStatus() {
+                // Check localStorage for walkthrough completion
+                if (localStorage.getItem('timeblock_walkthrough_done')) {
+                    // User has completed walkthrough
+                }
+            }
+            
+            // Initialize when DOM is ready
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', init);
+            } else {
+                init();
+            }
+        })();
+    </script>
+</body>
+</html>

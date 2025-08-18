@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TimeBlock - Dump First, Organize Later</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'dark-violet': '#1E1E2E',
+                        'deep-violet': '#3F1D79', 
+                        'royal-purple': '#5B21B6',
+                        'electric-violet': '#7C3AED',
+                        'blue-indigo': '#4F46E5',
+                        'soft-cyan': '#38BDF8'
+                    },
+                    fontFamily: {
+                        'maison': ['Inter', 'system-ui', 'sans-serif'],
+                        'apercu': ['system-ui', '-apple-system', 'sans-serif']
+                    },
+                    backdropBlur: {
+                        'xs': '2px',
+                    }
+                }
+            }
+        };
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        .glass-card {
+            background: rgba(255, 255, 255, 0.12);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .glass-subtle {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #1E1E2E 0%, #3F1D79 50%, #5B21B6 100%);
+        }
+        .gradient-button {
+            background: linear-gradient(135deg, #7C3AED 0%, #4F46E5 100%);
+        }
+        .glow-hover:hover {
+            box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+        }
+        .drag-ghost {
+            opacity: 0.8;
+            transform: scale(1.05);
+            z-index: 1000;
+        }
+        .drop-zone-highlight {
+            border: 2px dashed #38BDF8 !important;
+            background: rgba(56, 189, 248, 0.1) !important;
+        }
+        .task-block {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+            border-left: 4px solid #7C3AED;
+        }
+        .drawer-handle {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(8px);
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen text-white overflow-x-hidden">
+    
+    <!-- @COMPONENT: LandingPage -->
+    <div id="landing-page" class="min-h-screen flex">
+        <!-- Left Panel -->
+        <div class="w-1/2 flex items-center justify-center p-8">
+            <div class="glass-card rounded-3xl p-12 max-w-lg w-full text-center shadow-2xl">
+                <!-- Logo -->
+                <div class="mb-8">
+                    <h1 class="text-4xl font-maison font-bold bg-gradient-to-r from-electric-violet to-blue-indigo bg-clip-text text-transparent">
+                        TimeBlock
+                    </h1>
+                </div>
+                
+                <!-- Hero Text -->
+                <h2 class="text-3xl font-maison font-semibold mb-8 leading-tight">
+                    Dump First, Organize Later
+                </h2>
+                
+                <!-- Google Sign-Up Button -->
+                <button class="glass-card w-full py-4 px-6 rounded-xl mb-4 flex items-center justify-center gap-3 hover:bg-white/20 transition-all glow-hover" data-mock="true">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    <span class="font-apercu font-medium">Sign up with Google</span>
+                </button>
+                
+                <!-- Email Sign-Up -->
+                <div class="mb-6">
+                    <input 
+                        type="email" 
+                        placeholder="Enter your email" 
+                        class="glass-subtle w-full py-4 px-4 rounded-xl mb-4 bg-transparent placeholder-white/70 border-white/20 focus:border-soft-cyan focus:ring-2 focus:ring-soft-cyan/50 outline-none transition-all"
+                        data-mock="true"
+                    />
+                    <button class="gradient-button w-full py-4 px-6 rounded-xl font-apercu font-medium hover:shadow-lg hover:shadow-electric-violet/30 transition-all glow-hover" data-mock="true">
+                        Sign Up
+                    </button>
+                </div>
+                
+                <!-- Sign In Link -->
+                <p class="text-white/90 font-apercu">
+                    Already have an account? <a href="#" class="text-soft-cyan hover:text-soft-cyan/80 font-medium" data-mock="true">Sign In</a>
+                </p>
+            </div>
+        </div>
+        
+        <!-- Right Panel -->
+        <div class="w-1/2 flex items-center justify-center p-8">
+            <div class="glass-card rounded-3xl p-8 max-w-2xl w-full shadow-2xl">
+                <!-- Feature Carousel -->
+                <div id="feature-carousel" class="relative">
+                    <div class="carousel-content">
+                        <!-- Slide 1: 3-Level Navigation -->
+                        <div class="carousel-slide active">
+                            <div class="mb-6">
+                                <h3 class="text-xl font-maison font-semibold mb-3">Month → Day → Hour</h3>
+                                <p class="text-white/80 font-apercu">No extra buttons. Just click through.</p>
+                            </div>
+                            <!-- Mock app screenshot showing month view -->
+                            <div class="glass-subtle rounded-2xl p-6 shadow-lg">
+                                <div class="grid grid-cols-7 gap-2 mb-4">
+                                    <div class="text-center text-sm font-apercu font-medium text-white/70">Mon</div>
+                                    <div class="text-center text-sm font-apercu font-medium text-white/70">Tue</div>
+                                    <div class="text-center text-sm font-apercu font-medium text-white/70">Wed</div>
+                                    <div class="text-center text-sm font-apercu font-medium text-white/70">Thu</div>
+                                    <div class="text-center text-sm font-apercu font-medium text-white/70">Fri</div>
+                                    <div class="text-center text-sm font-apercu font-medium text-white/70">Sat</div>
+                                    <div class="text-center text-sm font-apercu font-medium text-white/70">Sun</div>
+                                </div>
+                                <div class="grid grid-cols-7 gap-2">
+                                    <div class="aspect-square glass-subtle rounded-lg flex items-center justify-center text-sm cursor-pointer hover:bg-white/20">1</div>
+                                    <div class="aspect-square glass-subtle rounded-lg flex items-center justify-center text-sm cursor-pointer hover:bg-white/20">2</div>
+                                    <div class="aspect-square glass-subtle rounded-lg flex items-center justify-center text-sm cursor-pointer hover:bg-white/20 ring-2 ring-electric-violet">3</div>
+                                    <div class="aspect-square glass-subtle rounded-lg flex items-center justify-center text-sm cursor-pointer hover:bg-white/20">4</div>
+                                    <div class="aspect-square glass-subtle rounded-lg flex items-center justify-center text-sm cursor-pointer hover:bg-white/20">5</div>
+                                    <div class="aspect-square glass-subtle rounded-lg flex items-center justify-center text-sm cursor-pointer hover:bg-white/20">6</div>
+                                    <div class="aspect-square glass-subtle rounded-lg flex items-center justify-center text-sm cursor-pointer hover:bg-white/20">7</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Carousel Controls -->
+                    <div class="flex justify-center mt-6 gap-2">
+                        <button class="w-2 h-2 rounded-full bg-electric-violet"></button>
+                        <button class="w-2 h-2 rounded-full bg-white/30"></button>
+                        <button class="w-2 h-2 rounded-full bg-white/30"></button>
+                        <button class="w-2 h-2 rounded-full bg-white/30"></button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: LandingPage -->
+    
+    <!-- @COMPONENT: AppShell [hidden by default, shown after login] -->
+    <div id="app-shell" class="hidden min-h-screen gradient-bg">
+        <!-- Header -->
+        <header class="glass-card border-b border-white/10 p-4 flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <h1 class="text-xl font-maison font-bold bg-gradient-to-r from-electric-violet to-blue-indigo bg-clip-text text-transparent">
+                    TimeBlock
+                </h1>
+            </div>
+            
+            <div class="flex items-center gap-6 text-center">
+                <div>
+                    <h2 class="text-lg font-maison font-semibold" data-bind="currentView.title">August 2025</h2>
+                    <p class="text-sm text-white/70 font-apercu" data-bind="currentView.subtitle">Month</p>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <button class="text-white/70 hover:text-soft-cyan transition-colors" data-event="click:openWalkthrough">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </button>
+                <button class="w-8 h-8 glass-subtle rounded-full flex items-center justify-center">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path>
+                    </svg>
+                </button>
+            </div>
+        </header>
+        
+        <!-- Main Content Area -->
+        <main class="flex-1 p-6" style="height: calc(100vh - 80px - 120px);">
+            
+            <!-- @COMPONENT: MonthView [default view] -->
+            <div id="month-view" class="h-full">
+                <div class="glass-card rounded-2xl p-6 h-full shadow-xl">
+                    <!-- Calendar Header -->
+                    <div class="grid grid-cols-7 gap-4 mb-4 pb-4 border-b border-white/10">
+                        <div class="text-center font-apercu font-medium text-white/70">Mon</div>
+                        <div class="text-center font-apercu font-medium text-white/70">Tue</div>
+                        <div class="text-center font-apercu font-medium text-white/70">Wed</div>
+                        <div class="text-center font-apercu font-medium text-white/70">Thu</div>
+                        <div class="text-center font-apercu font-medium text-white/70">Fri</div>
+                        <div class="text-center font-apercu font-medium text-white/70">Sat</div>
+                        <div class="text-center font-apercu font-medium text-white/70">Sun</div>
+                    </div>
+                    
+                    <!-- Calendar Grid -->
+                    <div class="grid grid-cols-7 gap-4 h-5/6">
+                        <!-- @MAP: monthDays.map(day => ( -->
+                        <div class="day-cell glass-subtle rounded-xl p-3 cursor-pointer hover:bg-white/20 hover:shadow-lg transition-all min-h-24 relative" data-event="click:openDayView" data-implementation="Opens Day View overlay for this date">
+                            <div class="absolute top-2 right-2 text-sm font-apercu text-white/90" data-bind="day.number">18</div>
+                            <div class="mt-6 space-y-1">
+                                <div class="w-2 h-2 rounded-full bg-electric-violet"></div>
+                                <div class="w-2 h-2 rounded-full bg-yellow-400"></div>
+                                <div class="text-xs text-white/60 font-apercu">+2</div>
+                            </div>
+                        </div>
+                        
+                        <div class="day-cell glass-subtle rounded-xl p-3 cursor-pointer hover:bg-white/20 hover:shadow-lg transition-all min-h-24 relative">
+                            <div class="absolute top-2 right-2 text-sm font-apercu text-white/90">19</div>
+                        </div>
+                        
+                        <div class="day-cell glass-subtle rounded-xl p-3 cursor-pointer hover:bg-white/20 hover:shadow-lg transition-all min-h-24 relative">
+                            <div class="absolute top-2 right-2 text-sm font-apercu text-white/90">20</div>
+                            <div class="mt-6">
+                                <div class="w-2 h-2 rounded-full bg-green-400"></div>
+                            </div>
+                        </div>
+                        
+                        <!-- More day cells... -->
+                        <div class="day-cell glass-subtle rounded-xl p-3 cursor-pointer hover:bg-white/20 hover:shadow-lg transition-all min-h-24 relative">
+                            <div class="absolute top-2 right-2 text-sm font-apercu text-white/90">21</div>
+                        </div>
+                        <div class="day-cell glass-subtle rounded-xl p-3 cursor-pointer hover:bg-white/20 hover:shadow-lg transition-all min-h-24 relative">
+                            <div class="absolute top-2 right-2 text-sm font-apercu text-white/90">22</div>
+                        </div>
+                        <div class="day-cell glass-subtle rounded-xl p-3 cursor-pointer hover:bg-white/20 hover:shadow-lg transition-all min-h-24 relative">
+                            <div class="absolute top-2 right-2 text-sm font-apercu text-white/90">23</div>
+                        </div>
+                        <div class="day-cell glass-subtle rounded-xl p-3 cursor-pointer hover:bg-white/20 hover:shadow-lg transition-all min-h-24 relative">
+                            <div class="absolute top-2 right-2 text-sm font-apercu text-white/90">24</div>
+                        </div>
+                        <!-- @END_MAP )) -->
+                        
+                        <!-- Fill remaining cells for demo -->
+                        <div class="day-cell glass-subtle rounded-xl p-3 cursor-pointer hover:bg-white/20 hover:shadow-lg transition-all min-h-24 relative">
+                            <div class="absolute top-2 right-2 text-sm font-apercu text-white/90">25</div>
+                        </div>
+                        <div class="day-cell glass-subtle rounded-xl p-3 cursor-pointer hover:bg-white/20 hover:shadow-lg transition-all min-h-24 relative">
+                            <div class="absolute top-2 right-2 text-sm font-apercu text-white/90">26</div>
+                        </div>
+                        <div class="day-cell glass-subtle rounded-xl p-3 cursor-pointer hover:bg-white/20 hover:shadow-lg transition-all min-h-24 relative">
+                            <div class="absolute top-2 right-2 text-sm font-apercu text-white/90">27</div>
+                        </div>
+                        <div class="day-cell glass-subtle rounded-xl p-3 cursor-pointer hover:bg-white/20 hover:shadow-lg transition-all min-h-24 relative">
+                            <div class="absolute top-2 right-2 text-sm font-apercu text-white/90">28</div>
+                        </div>
+                        <div class="day-cell glass-subtle rounded-xl p-3 cursor-pointer hover:bg-white/20 hover:shadow-lg transition-all min-h-24 relative">
+                            <div class="absolute top-2 right-2 text-sm font-apercu text-white/90">29</div>
+                        </div>
+                        <div class="day-cell glass-subtle rounded-xl p-3 cursor-pointer hover:bg-white/20 hover:shadow-lg transition-all min-h-24 relative">
+                            <div class="absolute top-2 right-2 text-sm font-apercu text-white/90">30</div>
+                        </div>
+                        <div class="day-cell glass-subtle rounded-xl p-3 cursor-pointer hover:bg-white/20 hover:shadow-lg transition-all min-h-24 relative">
+                            <div class="absolute top-2 right-2 text-sm font-apercu text-white/90">31</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: MonthView -->
+            
+        </main>
+        
+        <!-- @COMPONENT: NotesDrawer [persistent] -->
+        <div id="notes-drawer" class="fixed bottom-0 left-0 right-0 z-30" data-state="partial">
+            <!-- Drawer Handle -->
+            <div class="drawer-handle h-6 rounded-t-xl cursor-ns-resize flex items-center justify-center" data-event="drag:resizeDrawer">
+                <div class="w-12 h-1 bg-white/40 rounded-full"></div>
+                <div class="ml-4 text-xs font-apercu text-white/70">
+                    <span data-bind="notesCount">3</span> notes
+                </div>
+            </div>
+            
+            <!-- Drawer Content -->
+            <div class="glass-card rounded-t-2xl shadow-2xl p-6" style="height: 200px;">
+                <!-- Composer Area -->
+                <div class="mb-4">
+                    <div class="flex gap-3 mb-3">
+                        <input 
+                            type="text" 
+                            placeholder="Add a new note..." 
+                            class="flex-1 glass-subtle rounded-lg px-4 py-3 bg-transparent placeholder-white/60 border-white/20 focus:border-soft-cyan focus:ring-2 focus:ring-soft-cyan/50 outline-none transition-all font-apercu"
+                            data-bind="newNote.title"
+                        />
+                        <select class="glass-subtle rounded-lg px-3 py-3 bg-transparent border-white/20 focus:border-soft-cyan outline-none text-white font-apercu">
+                            <option value="low" class="bg-deep-violet">Low</option>
+                            <option value="medium" class="bg-deep-violet">Medium</option>
+                            <option value="high" class="bg-deep-violet">High</option>
+                        </select>
+                        <button class="gradient-button px-6 py-3 rounded-lg font-apercu font-medium glow-hover" data-event="click:addNote">
+                            Add
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Notes List -->
+                <div class="space-y-2 overflow-y-auto" style="max-height: 120px;">
+                    <!-- @MAP: notes.map(note => ( -->
+                    <div class="note-item glass-subtle rounded-lg p-3 flex items-center gap-3 cursor-grab hover:bg-white/20 transition-all" draggable="true" data-event="drag:startNoteDrag" data-implementation="Should implement drag and drop to calendar">
+                        <div class="text-white/40">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 16a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-apercu text-white" data-bind="note.title">Review quarterly reports</span>
+                                <span class="px-2 py-1 text-xs rounded-full bg-red-500/20 text-red-300 font-apercu">High</span>
+                            </div>
+                            <p class="text-sm text-white/60 font-apercu" data-bind="note.description">Prepare for board meeting</p>
+                        </div>
+                        <button class="text-white/40 hover:text-white transition-colors">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="note-item glass-subtle rounded-lg p-3 flex items-center gap-3 cursor-grab hover:bg-white/20 transition-all" draggable="true">
+                        <div class="text-white/40">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 16a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-apercu text-white">Call dentist</span>
+                                <span class="px-2 py-1 text-xs rounded-full bg-yellow-500/20 text-yellow-300 font-apercu">Medium</span>
+                            </div>
+                        </div>
+                        <button class="text-white/40 hover:text-white transition-colors">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="note-item glass-subtle rounded-lg p-3 flex items-center gap-3 cursor-grab hover:bg-white/20 transition-all" draggable="true">
+                        <div class="text-white/40">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 16a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z"></path>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center gap-2">
+                                <span class="font-apercu text-white">Buy groceries</span>
+                                <span class="px-2 py-1 text-xs rounded-full bg-green-500/20 text-green-300 font-apercu">Low</span>
+                            </div>
+                        </div>
+                        <button class="text-white/40 hover:text-white transition-colors">
+                            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    <!-- @END_MAP )) -->
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: NotesDrawer -->
+        
+    </div>
+    <!-- @END_COMPONENT: AppShell -->
+    
+    <!-- @COMPONENT: DayViewOverlay [hidden by default] -->
+    <div id="day-view-overlay" class="fixed inset-0 z-40 hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" data-event="click:closeDayView"></div>
+        <div class="absolute inset-4 glass-card rounded-3xl shadow-2xl flex flex-col">
+            <!-- Header -->
+            <div class="flex items-center justify-between p-6 border-b border-white/10">
+                <button class="flex items-center gap-2 text-white/70 hover:text-soft-cyan transition-colors" data-event="click:previousDay">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    <span class="font-apercu">Aug 17</span>
+                </button>
+                
+                <div class="text-center">
+                    <h2 class="text-xl font-maison font-semibold" data-bind="selectedDate.formatted">Aug 18, 2025 (Mon)</h2>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <button class="flex items-center gap-2 text-white/70 hover:text-soft-cyan transition-colors" data-event="click:nextDay">
+                        <span class="font-apercu">Aug 19</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                    <button class="text-white/70 hover:text-white transition-colors" data-event="click:closeDayView">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Day Content -->
+            <div class="flex-1 p-6 overflow-y-auto">
+                <!-- Unscheduled Tasks -->
+                <div class="mb-6">
+                    <h3 class="font-apercu font-medium text-white/70 mb-3">Unscheduled</h3>
+                    <div class="flex gap-2 flex-wrap">
+                        <div class="glass-subtle rounded-lg px-4 py-2 cursor-grab hover:bg-white/20" draggable="true">
+                            <span class="font-apercu text-white">Team standup</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Timeline -->
+                <div class="space-y-1">
+                    <!-- @MAP: dayHours.map(hour => ( -->
+                    <div class="hour-row flex min-h-16 cursor-pointer hover:bg-white/5 rounded-lg transition-all" data-event="click:openHourView" data-implementation="Opens Hour View for this specific hour">
+                        <div class="w-20 flex-shrink-0 text-right pr-4 py-2">
+                            <span class="text-sm font-apercu text-white/60" data-bind="hour.label">9:00 AM</span>
+                        </div>
+                        <div class="flex-1 border-l border-white/10 pl-4 py-2 relative">
+                            <!-- Scheduled task block -->
+                            <div class="task-block rounded-lg p-3 mb-2 shadow-lg">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-apercu font-medium text-white" data-bind="task.title">Review quarterly reports</h4>
+                                        <p class="text-sm text-white/60 font-apercu" data-bind="task.time">9:00 - 10:00 AM</p>
+                                    </div>
+                                    <span class="px-2 py-1 text-xs rounded-full bg-red-500/20 text-red-300 font-apercu" data-bind="task.priority">High</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="hour-row flex min-h-16 cursor-pointer hover:bg-white/5 rounded-lg transition-all">
+                        <div class="w-20 flex-shrink-0 text-right pr-4 py-2">
+                            <span class="text-sm font-apercu text-white/60">10:00 AM</span>
+                        </div>
+                        <div class="flex-1 border-l border-white/10 pl-4 py-2"></div>
+                    </div>
+                    
+                    <div class="hour-row flex min-h-16 cursor-pointer hover:bg-white/5 rounded-lg transition-all">
+                        <div class="w-20 flex-shrink-0 text-right pr-4 py-2">
+                            <span class="text-sm font-apercu text-white/60">11:00 AM</span>
+                        </div>
+                        <div class="flex-1 border-l border-white/10 pl-4 py-2"></div>
+                    </div>
+                    <!-- @END_MAP )) -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: DayViewOverlay -->
+    
+    <!-- @COMPONENT: HourViewOverlay [hidden by default] -->
+    <div id="hour-view-overlay" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" data-event="click:closeHourView"></div>
+        <div class="absolute inset-8 glass-card rounded-3xl shadow-2xl flex flex-col">
+            <!-- Header -->
+            <div class="flex items-center justify-between p-6 border-b border-white/10">
+                <button class="flex items-center gap-2 text-white/70 hover:text-soft-cyan transition-colors" data-event="click:previousHour">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                    </svg>
+                    <span class="font-apercu">8 AM</span>
+                </button>
+                
+                <div class="text-center">
+                    <h2 class="text-xl font-maison font-semibold" data-bind="selectedHour.formatted">Aug 18, 2025 • 09:00–09:59</h2>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <button class="flex items-center gap-2 text-white/70 hover:text-soft-cyan transition-colors" data-event="click:nextHour">
+                        <span class="font-apercu">10 AM</span>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                        </svg>
+                    </button>
+                    <button class="text-white/70 hover:text-white transition-colors" data-event="click:closeHourView">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Hour Content -->
+            <div class="flex-1 p-8">
+                <!-- 15-minute segments -->
+                <div class="grid grid-cols-4 gap-6 h-full">
+                    <!-- @MAP: quarterHours.map(quarter => ( -->
+                    <div class="quarter-segment glass-subtle rounded-xl p-6 cursor-pointer hover:bg-white/20 transition-all flex flex-col" data-event="drop:scheduleTask" data-implementation="Accept dropped tasks and create 15-minute blocks">
+                        <div class="text-center mb-4">
+                            <span class="text-lg font-apercu font-medium text-white" data-bind="quarter.time">9:00</span>
+                            <div class="text-sm text-white/60 font-apercu">15 min</div>
+                        </div>
+                        <div class="flex-1 flex items-center justify-center">
+                            <!-- Task block if scheduled -->
+                            <div class="task-block rounded-lg p-4 w-full shadow-lg">
+                                <div class="text-center">
+                                    <h4 class="font-apercu font-medium text-white text-sm mb-1">Review reports</h4>
+                                    <span class="px-2 py-1 text-xs rounded-full bg-red-500/20 text-red-300 font-apercu">High</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="quarter-segment glass-subtle rounded-xl p-6 cursor-pointer hover:bg-white/20 transition-all flex flex-col">
+                        <div class="text-center mb-4">
+                            <span class="text-lg font-apercu font-medium text-white">9:15</span>
+                            <div class="text-sm text-white/60 font-apercu">15 min</div>
+                        </div>
+                        <div class="flex-1 flex items-center justify-center">
+                            <div class="text-white/40 font-apercu text-sm">Drop task here</div>
+                        </div>
+                    </div>
+                    
+                    <div class="quarter-segment glass-subtle rounded-xl p-6 cursor-pointer hover:bg-white/20 transition-all flex flex-col">
+                        <div class="text-center mb-4">
+                            <span class="text-lg font-apercu font-medium text-white">9:30</span>
+                            <div class="text-sm text-white/60 font-apercu">15 min</div>
+                        </div>
+                        <div class="flex-1 flex items-center justify-center">
+                            <div class="text-white/40 font-apercu text-sm">Drop task here</div>
+                        </div>
+                    </div>
+                    
+                    <div class="quarter-segment glass-subtle rounded-xl p-6 cursor-pointer hover:bg-white/20 transition-all flex flex-col">
+                        <div class="text-center mb-4">
+                            <span class="text-lg font-apercu font-medium text-white">9:45</span>
+                            <div class="text-sm text-white/60 font-apercu">15 min</div>
+                        </div>
+                        <div class="flex-1 flex items-center justify-center">
+                            <div class="text-white/40 font-apercu text-sm">Drop task here</div>
+                        </div>
+                    </div>
+                    <!-- @END_MAP )) -->
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: HourViewOverlay -->
+    
+    <!-- @COMPONENT: WalkthroughOverlay [hidden by default] -->
+    <div id="walkthrough-overlay" class="fixed inset-0 z-50 hidden">
+        <!-- @STATE: currentStep:number = 0, isActive:boolean = false -->
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm"></div>
+        
+        <!-- Step 1: Month View -->
+        <div class="walkthrough-step active absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+            <div class="glass-card rounded-2xl p-8 max-w-md text-center shadow-2xl">
+                <h3 class="text-xl font-maison font-semibold mb-4">Welcome to TimeBlock</h3>
+                <p class="font-apercu text-white/80 mb-6">This is your Month view. Click any date to zoom into the Day.</p>
+                <div class="flex gap-3 justify-center">
+                    <button class="px-6 py-3 text-white/70 hover:text-white transition-colors font-apercu" data-event="click:skipWalkthrough">Skip</button>
+                    <button class="gradient-button px-6 py-3 rounded-lg font-apercu font-medium glow-hover" data-event="click:nextWalkthroughStep">Next</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Walkthrough pointer/arrow -->
+        <div class="absolute bottom-40 left-1/2 transform -translate-x-1/2">
+            <svg class="w-6 h-6 text-soft-cyan animate-bounce" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clip-rule="evenodd"></path>
+            </svg>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: WalkthroughOverlay -->
+    
+    <script>
+        // TODO: Implement business logic, API calls, and state management
+        
+        (function() {
+            // Demo functionality for switching between landing and app
+            function showApp() {
+                document.getElementById('landing-page').style.display = 'none';
+                document.getElementById('app-shell').classList.remove('hidden');
+                
+                // Check if walkthrough should be shown
+                const hasSeenWalkthrough = localStorage.getItem('timeblock_walkthrough_done');
+                if (!hasSeenWalkthrough) {
+                    setTimeout(() => {
+                        document.getElementById('walkthrough-overlay').classList.remove('hidden');
+                    }, 500);
+                }
+            }
+            
+            // Add event listeners for demo
+            document.querySelectorAll('[data-mock="true"]').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (button.textContent.includes('Sign up') || button.textContent.includes('Sign In')) {
+                        showApp();
+                    }
+                });
+            });
+            
+            // Walkthrough controls
+            document.addEventListener('click', (e) => {
+                if (e.target.matches('[data-event*="skipWalkthrough"]') || 
+                    e.target.matches('[data-event*="nextWalkthroughStep"]')) {
+                    localStorage.setItem('timeblock_walkthrough_done', 'true');
+                    document.getElementById('walkthrough-overlay').classList.add('hidden');
+                }
+                
+                if (e.target.matches('[data-event*="openDayView"]') || 
+                    e.target.closest('.day-cell')) {
+                    document.getElementById('day-view-overlay').classList.remove('hidden');
+                }
+                
+                if (e.target.matches('[data-event*="closeDayView"]')) {
+                    document.getElementById('day-view-overlay').classList.add('hidden');
+                }
+                
+                if (e.target.matches('[data-event*="openHourView"]') || 
+                    e.target.closest('.hour-row')) {
+                    document.getElementById('hour-view-overlay').classList.remove('hidden');
+                }
+                
+                if (e.target.matches('[data-event*="closeHourView"]')) {
+                    document.getElementById('hour-view-overlay').classList.add('hidden');
+                }
+                
+                if (e.target.matches('[data-event*="openWalkthrough"]')) {
+                    document.getElementById('walkthrough-overlay').classList.remove('hidden');
+                }
+            });
+            
+            // Carousel functionality
+            let currentSlide = 0;
+            const slides = [
+                {
+                    title: "Month → Day → Hour",
+                    subtitle: "No extra buttons. Just click through."
+                },
+                {
+                    title: "Notes Drawer",
+                    subtitle: "Persistent, dynamic, and drag-ready."
+                },
+                {
+                    title: "Drag & Drop",
+                    subtitle: "Drop from notes into dates and time slots."
+                },
+                {
+                    title: "Glassmorphism UI", 
+                    subtitle: "Calm. Focused. Futuristic."
+                }
+            ];
+            
+            // Auto-advance carousel every 5 seconds
+            setInterval(() => {
+                currentSlide = (currentSlide + 1) % slides.length;
+                updateCarousel();
+            }, 5000);
+            
+            function updateCarousel() {
+                const slide = document.querySelector('.carousel-slide');
+                const dots = document.querySelectorAll('#feature-carousel button');
+                
+                if (slide) {
+                    const slideData = slides[currentSlide];
+                    slide.querySelector('h3').textContent = slideData.title;
+                    slide.querySelector('p').textContent = slideData.subtitle;
+                }
+                
+                dots.forEach((dot, index) => {
+                    dot.className = index === currentSlide ? 
+                        'w-2 h-2 rounded-full bg-electric-violet' : 
+                        'w-2 h-2 rounded-full bg-white/30';
+                });
+            }
+            
+            // Basic drag and drop simulation
+            document.addEventListener('dragstart', (e) => {
+                if (e.target.closest('.note-item')) {
+                    e.target.classList.add('drag-ghost');
+                    
+                    // Highlight all drop zones
+                    document.querySelectorAll('.day-cell, .hour-row, .quarter-segment').forEach(zone => {
+                        zone.classList.add('drop-zone-highlight');
+                    });
+                }
+            });
+            
+            document.addEventListener('dragend', (e) => {
+                if (e.target.closest('.note-item')) {
+                    e.target.classList.remove('drag-ghost');
+                    
+                    // Remove highlights
+                    document.querySelectorAll('.drop-zone-highlight').forEach(zone => {
+                        zone.classList.remove('drop-zone-highlight');
+                    });
+                }
+            });
+        })();
+    </script>
+</body>
+</html>
