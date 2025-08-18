@@ -1,0 +1,85 @@
+1. Notes Drawer (collapsed by default)
+
+Right now it seems like the drawer is partially expanded on load.
+
+Instead, it should:
+
+Initial state → collapsed (only a thin bar visible at the bottom with "0 notes" + drag handle).
+
+Interaction → user drags/pulls it up OR clicks the bar → then expands smoothly (animate height).
+
+Technical approach → set drawer height: 0 or translateY(100%) initially, and animate translateY(0) on expansion.
+
+2. Calendar last row issue
+
+The last row looks like it’s cut off / visually inconsistent.
+
+Common causes:
+
+The grid isn’t filling all 6 weeks for the month (some libraries auto-trim empty days).
+
+Each day cell has unequal height or the row gap isn’t applied uniformly.
+
+Sometimes if you’re flexing instead of using a strict 7-column CSS grid, the last row breaks.
+
+Fix:
+
+Force a grid-template-rows: repeat(6, 1fr) so all months render in 6 equal rows (even if some are empty).
+
+Empty days → just render as blank cells with correct styling (so the last row doesn’t collapse).
+
+3. Notes Drawer "+" button placement
+
+Currently, "+" is at the extreme top right of the drawer bar (feels like a system control, not contextual).
+
+Better:
+
+When drawer is expanded → show a light shaded box/card with a "+" inside it → that acts as “Add Note”.
+
+This way, the affordance is clear: notes live inside the drawer, not in the nav.
+
+Visual: imagine a subtle card (rounded, light gradient) at the top of the notes list, with + Add Note.
+
+Notes Drawer — Global & Persistent
+
+Always Visible: The notes drawer remains accessible on all views (Month, Day, Hour). Switching between views does not reset or hide the drawer.
+
+Pull-up Interaction: Drawer can be swiped/pulled up from a handle at the bottom of the screen (like iOS Maps/Apple Calendar style).
+
+Global Context: Notes created in the drawer are available globally but can be attached/dropped onto specific views (Month cell, Day block, Hour slot).
+
+Drag & Drop Functionality
+
+Universal Drag: Notes can be dragged out of the drawer and dropped onto:
+
+Month View → attaches to a day cell
+
+Day View → attaches to a time block
+
+Hour View → attaches to a specific slot or sub-task line
+
+Persistence: Once dropped, the note remains in that location until moved again.
+
+If dropped in Month view → appears when user opens that day in Day/Hour view.
+
+If dropped in Day/Hour view → the note also shows up as a marker on the Month view for that date.
+
+Sync Across Views:
+
+Moving a note in one view updates its position in all others.
+
+Example: If I drag a note into 3 PM slot (Day View), it should reflect as a small marker in the Month view for that date.
+
+Edge Behaviors
+
+Dragging Cancelled → If user releases before dropping, note returns to drawer.
+
+Multiple Notes per Slot → Stack indicators show how many notes are present.
+
+Quick Actions → Tap & hold on a note in its dropped location lets you:
+
+Edit note
+
+Move to drawer
+
+Delete
