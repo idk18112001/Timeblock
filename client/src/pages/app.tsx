@@ -7,7 +7,7 @@ import NotesDrawer from "@/components/notes-drawer";
 import Walkthrough from "@/components/walkthrough";
 import { useWalkthrough } from "@/hooks/use-walkthrough";
 import { formatDate, formatMonthYear } from "@/lib/date-utils";
-import { HelpCircle, User } from "lucide-react";
+import { HelpCircle, User, ChevronLeft, ChevronRight } from "lucide-react";
 
 type ViewMode = "month" | "day" | "hour";
 
@@ -45,7 +45,7 @@ export default function App() {
 
   const getCurrentViewTitle = () => {
     if (viewMode === "month") {
-      return formatMonthYear(currentDate);
+      return currentDate.toLocaleDateString("en-US", { month: "long" });
     }
     if (viewMode === "day" && selectedDate) {
       return formatDate(selectedDate);
@@ -57,7 +57,7 @@ export default function App() {
   };
 
   const getCurrentViewSubtitle = () => {
-    if (viewMode === "month") return "Month";
+    if (viewMode === "month") return currentDate.getFullYear().toString();
     if (viewMode === "day") return "Day";
     if (viewMode === "hour") return "Hour";
     return "";
@@ -74,13 +74,51 @@ export default function App() {
         </div>
         
         <div className="flex items-center gap-6 text-center">
-          <div>
-            <h2 className="text-lg font-maison font-semibold text-white" data-testid="text-view-title">
-              {getCurrentViewTitle()}
-            </h2>
-            <p className="text-sm text-white/70 font-apercu" data-testid="text-view-subtitle">
-              {getCurrentViewSubtitle()}
-            </p>
+          <div className="flex items-center gap-4">
+            {viewMode === "month" && (
+              <>
+                <Button
+                  onClick={() => {
+                    const prevMonth = new Date(currentDate);
+                    prevMonth.setMonth(prevMonth.getMonth() - 1);
+                    handleMonthChange(prevMonth);
+                  }}
+                  variant="ghost"
+                  size="sm"
+                  className="text-white/70 hover:text-white hover:bg-white/10 rounded-full w-8 h-8 p-0"
+                  data-testid="button-previous-month"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </Button>
+              </>
+            )}
+            
+            <div>
+              <h2 className="text-lg font-maison font-semibold text-white" data-testid="text-view-title">
+                {getCurrentViewTitle()}
+              </h2>
+              <p className="text-sm text-white/70 font-apercu" data-testid="text-view-subtitle">
+                {getCurrentViewSubtitle()}
+              </p>
+            </div>
+            
+            {viewMode === "month" && (
+              <>
+                <Button
+                  onClick={() => {
+                    const nextMonth = new Date(currentDate);
+                    nextMonth.setMonth(nextMonth.getMonth() + 1);
+                    handleMonthChange(nextMonth);
+                  }}
+                  variant="ghost"
+                  size="sm"
+                  className="text-white/70 hover:text-white hover:bg-white/10 rounded-full w-8 h-8 p-0"
+                  data-testid="button-next-month"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              </>
+            )}
           </div>
         </div>
         
@@ -106,7 +144,7 @@ export default function App() {
       </header>
       
       {/* Main Content Area */}
-      <main className="flex-1 p-6" style={{ height: "calc(100vh - 80px - 120px)" }}>
+      <main className="flex-1 p-6" style={{ height: "calc(100vh - 80px)" }}>
         {viewMode === "month" && (
           <MonthView 
             currentDate={currentDate}

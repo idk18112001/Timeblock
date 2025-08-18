@@ -3,9 +3,40 @@ import { useDragDrop } from "@/hooks/use-drag-drop";
 import { getDaysInMonth, isSameMonth, formatDateString } from "@/lib/date-utils";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import type { Note, Task } from "@shared/schema";
+
+// Mock localStorage functions for tasks
+const mockTasksApi = {
+  async getTasks(): Promise<Task[]> {
+    const stored = localStorage.getItem('timeBlocker_tasks');
+    return stored ? JSON.parse(stored) : [];
+  },
+  
+  async createTask(task: any): Promise<Task> {
+    const tasks = await this.getTasks();
+    const newTask: Task = {
+      id: Date.now().toString(),
+      ...task,
+      userId: 'demo-user',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    tasks.push(newTask);
+    localStorage.setItem('timeBlocker_tasks', JSON.stringify(tasks));
+    return newTask;
+  }
+};
+
+const mockNotesApi = {
+  async deleteNote(id: string): Promise<void> {
+    const stored = localStorage.getItem('timeBlocker_notes');
+    if (stored) {
+      const notes = JSON.parse(stored);
+      const filtered = notes.filter((n: any) => n.id !== id);
+      localStorage.setItem('timeBlocker_notes', JSON.stringify(filtered));
+    }
+  }
+};
 
 interface MonthViewProps {
   currentDate: Date;
@@ -21,12 +52,26 @@ export default function MonthView({ currentDate, onDateClick, onMonthChange }: M
 
   const { data: tasks = [] } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
+    queryFn: async () => {
+      try {
+        const res = await apiRequest("GET", "/api/tasks", undefined);
+        return res.json();
+      } catch (error) {
+        console.warn('API not available, using localStorage for tasks:', error);
+        return mockTasksApi.getTasks();
+      }
+    },
   });
 
   const createTaskMutation = useMutation({
     mutationFn: async (taskData: { noteId?: string; title: string; description?: string; priority: string; date: string; startTime?: string | null; duration?: number | null }) => {
-      const res = await apiRequest("POST", "/api/tasks", taskData);
-      return res.json();
+      try {
+        const res = await apiRequest("POST", "/api/tasks", taskData);
+        return res.json();
+      } catch (error) {
+        console.warn('API not available, using localStorage for task creation:', error);
+        return mockTasksApi.createTask(taskData);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
@@ -36,7 +81,12 @@ export default function MonthView({ currentDate, onDateClick, onMonthChange }: M
 
   const deleteNoteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/notes/${id}`);
+      try {
+        await apiRequest("DELETE", `/api/notes/${id}`);
+      } catch (error) {
+        console.warn('API not available, using localStorage for note deletion:', error);
+        await mockNotesApi.deleteNote(id);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
@@ -80,16 +130,6 @@ export default function MonthView({ currentDate, onDateClick, onMonthChange }: M
     });
   };
 
-  const handlePreviousMonth = () => {
-    const prevMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
-    onMonthChange(prevMonth);
-  };
-
-  const handleNextMonth = () => {
-    const nextMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1);
-    onMonthChange(nextMonth);
-  };
-
   return (
     <div className="h-full relative">
       <div className="glass-card rounded-2xl p-6 h-full shadow-xl">
@@ -101,27 +141,6 @@ export default function MonthView({ currentDate, onDateClick, onMonthChange }: M
             </div>
           ))}
         </div>
-      
-      {/* Month Navigation Arrows */}
-      <Button
-        onClick={handlePreviousMonth}
-        variant="ghost"
-        size="sm"
-        className="absolute left-2 top-1/2 transform -translate-y-1/2 z-10 text-white/70 hover:text-white hover:bg-white/10 rounded-full w-10 h-10 p-0"
-        data-testid="button-previous-month"
-      >
-        <ChevronLeft className="w-5 h-5" />
-      </Button>
-      
-      <Button
-        onClick={handleNextMonth}
-        variant="ghost"
-        size="sm"
-        className="absolute right-2 top-1/2 transform -translate-y-1/2 z-10 text-white/70 hover:text-white hover:bg-white/10 rounded-full w-10 h-10 p-0"
-        data-testid="button-next-month"
-      >
-        <ChevronRight className="w-5 h-5" />
-      </Button>
         
         {/* Calendar Grid - Force 6 rows */}
         <div 

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,12 +11,61 @@ import { apiRequest } from "@/lib/queryClient";
 import { GripVertical, MoreHorizontal, Plus } from "lucide-react";
 import type { Note, InsertNote } from "@shared/schema";
 
+// Mock localStorage functions for development
+const mockNotesApi = {
+  async getNotes(): Promise<Note[]> {
+    const stored = localStorage.getItem('timeBlocker_notes');
+    const notes = stored ? JSON.parse(stored) : [];
+    console.log('mockNotesApi.getNotes:', notes);
+    return notes;
+  },
+  
+  async createNote(note: InsertNote): Promise<Note> {
+    console.log('mockNotesApi.createNote called with:', note);
+    const notes = await this.getNotes();
+    const newNote: Note = {
+      id: Date.now().toString(),
+      userId: 'demo-user',
+      title: note.title,
+      description: note.description || null,
+      priority: note.priority || "medium",
+      completed: note.completed || 0,
+      createdAt: new Date(),
+    };
+    console.log('Created note object:', newNote);
+    notes.push(newNote);
+    localStorage.setItem('timeBlocker_notes', JSON.stringify(notes));
+    console.log('Saved to localStorage. Total notes:', notes.length);
+    return newNote;
+  },
+  
+  async updateNote(id: string, updates: Partial<InsertNote>): Promise<Note> {
+    const notes = await this.getNotes();
+    const index = notes.findIndex(n => n.id === id);
+    if (index !== -1) {
+      notes[index] = { ...notes[index], ...updates };
+      localStorage.setItem('timeBlocker_notes', JSON.stringify(notes));
+      return notes[index];
+    }
+    throw new Error('Note not found');
+  },
+  
+  async deleteNote(id: string): Promise<void> {
+    const notes = await this.getNotes();
+    const filtered = notes.filter(n => n.id !== id);
+    localStorage.setItem('timeBlocker_notes', JSON.stringify(filtered));
+  }
+};
+
 type DrawerState = "collapsed" | "partial" | "full";
 
 export default function NotesDrawer() {
-  const [drawerState, setDrawerState] = useState<DrawerState>("collapsed");
-  const [newNote, setNewNote] = useState({ title: "", description: "", priority: "medium" as const });
+  const [drawerHeight, setDrawerHeight] = useState(0.25); // Start with 25% of screen height
   const [showComposer, setShowComposer] = useState(false);
+  const [newNote, setNewNote] = useState({ title: "", description: "", priority: "medium" as "low" | "medium" | "high" });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStartY, setDragStartY] = useState(0);
+  const [dragStartHeight, setDragStartHeight] = useState(0);
   
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -24,28 +73,74 @@ export default function NotesDrawer() {
 
   const { data: notes = [], isLoading } = useQuery<Note[]>({
     queryKey: ["/api/notes"],
+    queryFn: async () => {
+      console.log('Fetching notes...');
+      try {
+        const res = await apiRequest("GET", "/api/notes", undefined);
+        const data = await res.json();
+        console.log('API notes loaded:', data);
+        return data;
+      } catch (error) {
+        console.log('API failed, loading from localStorage');
+        const data = await mockNotesApi.getNotes();
+        console.log('LocalStorage notes loaded:', data);
+        return data;
+      }
+    },
   });
+
+  // Debug notes state
+  console.log('Current notes state:', notes, 'isLoading:', isLoading);
 
   const createNoteMutation = useMutation({
     mutationFn: async (note: InsertNote) => {
-      const res = await apiRequest("POST", "/api/notes", note);
-      return res.json();
+      console.log('Mutation starting with note:', note);
+      try {
+        const res = await apiRequest("POST", "/api/notes", note);
+        console.log('API success:', res.status);
+        return res.json();
+      } catch (error) {
+        console.log('API failed, using localStorage:', error);
+        const result = await mockNotesApi.createNote(note);
+        console.log('LocalStorage result:', result);
+        return result;
+      }
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      console.log('Mutation success:', data);
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
       setNewNote({ title: "", description: "", priority: "medium" });
       setShowComposer(false);
+      
+      // Auto-expand drawer when note is added (only if it's currently small)
+      if (drawerHeight < 0.4) {
+        const newHeight = Math.min(drawerHeight + 0.15, 0.5); // Increase by 15%, max 50%
+        setDrawerHeight(newHeight);
+      }
+      
       toast({
         title: "Note created",
         description: "Drag this note into the calendar when ready.",
+      });
+    },
+    onError: (error) => {
+      console.error('Mutation error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to create note. Please try again.",
+        variant: "destructive",
       });
     },
   });
 
   const updateNoteMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<InsertNote> }) => {
-      const res = await apiRequest("PATCH", `/api/notes/${id}`, updates);
-      return res.json();
+      try {
+        const res = await apiRequest("PATCH", `/api/notes/${id}`, updates);
+        return res.json();
+      } catch (error) {
+        return mockNotesApi.updateNote(id, updates);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
@@ -54,7 +149,11 @@ export default function NotesDrawer() {
 
   const deleteNoteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/notes/${id}`);
+      try {
+        await apiRequest("DELETE", `/api/notes/${id}`);
+      } catch (error) {
+        await mockNotesApi.deleteNote(id);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
@@ -62,14 +161,24 @@ export default function NotesDrawer() {
   });
 
   const handleAddNote = () => {
-    if (!newNote.title.trim()) return;
+    if (!newNote.title.trim()) {
+      toast({
+        title: "Empty note",
+        description: "Please enter a note title.",
+        variant: "destructive",
+      });
+      return;
+    }
     
-    createNoteMutation.mutate({
+    const noteToCreate = {
       title: newNote.title.trim(),
       description: newNote.description.trim() || undefined,
       priority: newNote.priority,
       completed: 0,
-    });
+    };
+    
+    console.log('Creating note:', noteToCreate);
+    createNoteMutation.mutate(noteToCreate);
   };
 
   const handleToggleComplete = (note: Note) => {
@@ -79,46 +188,81 @@ export default function NotesDrawer() {
     });
   };
 
-  const getDrawerHeight = () => {
-    if (drawerState === "collapsed") return "32px";
-    if (drawerState === "full") return "60vh";
-    
-    // Partial: auto-expand based on content
-    const baseHeight = 140; // Composer area + padding
-    const noteHeight = 68; // Per note
-    const maxNotes = 4;
-    const visibleNotes = Math.min(notes.length, maxNotes);
-    const contentHeight = baseHeight + (visibleNotes * noteHeight);
-    return `${Math.min(contentHeight, 400)}px`;
+  const getDrawerHeightPx = () => {
+    return `${drawerHeight * 100}vh`; // Convert percentage to viewport height
   };
 
-  const activePriorityClasses = {
-    low: "priority-low",
-    medium: "priority-medium",
-    high: "priority-high",
+  const handleMouseDown = (e: React.MouseEvent) => {
+    setIsDragging(true);
+    setDragStartY(e.clientY);
+    setDragStartHeight(drawerHeight);
+    e.preventDefault();
+  };
+
+  const handleMouseMove = (e: MouseEvent) => {
+    if (!isDragging) return;
+    
+    const deltaY = dragStartY - e.clientY; // Inverted because we want up movement to increase height
+    const deltaHeight = deltaY / window.innerHeight; // Convert pixels to viewport percentage
+    const newHeight = Math.min(Math.max(dragStartHeight + deltaHeight, 0.1), 0.6); // Min 10%, max 60%
+    
+    setDrawerHeight(newHeight);
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  // Add event listeners for mouse events
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, dragStartY, dragStartHeight]);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    // Note was dragged away, auto-contract drawer if it has no notes left
+    // We'll update this logic when we get the updated notes count
+    setTimeout(() => {
+      // Check if notes were actually removed and adjust accordingly
+      queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
+    }, 100);
   };
 
   return (
     <div
-      className="fixed bottom-0 left-0 right-0 z-30 transition-all duration-300"
-      style={{ height: getDrawerHeight() }}
+      className="fixed bottom-0 left-0 right-0 z-[60] transition-all duration-300"
+      style={{ height: getDrawerHeightPx() }}
       data-testid="notes-drawer"
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
     >
       {/* Drawer Handle */}
       <div
-        className="drawer-handle h-8 rounded-t-xl cursor-ns-resize flex items-center justify-center relative"
-        onClick={() => setDrawerState(drawerState === "collapsed" ? "partial" : "collapsed")}
+        className="drawer-handle h-8 rounded-t-xl cursor-ns-resize flex items-center justify-center px-4 relative select-none"
         data-testid="drawer-handle"
+        onMouseDown={handleMouseDown}
       >
-        <div className="w-12 h-1 bg-white/40 rounded-full"></div>
-        <div className="ml-4 text-xs font-apercu text-white/70">
-          <span data-testid="text-notes-count">{notes.length}</span> notes
+        <div className="flex items-center gap-2">
+          <div className="w-12 h-1 bg-white/40 rounded-full"></div>
+          <div className="text-xs font-apercu text-white/70">
+            <span data-testid="text-notes-count">{notes.length}</span> notes
+          </div>
         </div>
       </div>
       
       {/* Drawer Content */}
-      {drawerState !== "collapsed" && (
-        <div className="glass-card rounded-t-2xl shadow-2xl p-6 h-full overflow-hidden flex flex-col">
+      <div className="glass-card rounded-t-2xl shadow-2xl p-6 h-full overflow-hidden flex flex-col">
           {/* Add Note Card */}
           {!showComposer && (
             <div 
@@ -142,7 +286,11 @@ export default function NotesDrawer() {
                   value={newNote.title}
                   onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
                   className="flex-1 glass-subtle bg-transparent placeholder-white/60 border-white/20 focus:border-soft-cyan text-white"
-                  onKeyDown={(e) => e.key === "Enter" && handleAddNote()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      handleAddNote();
+                    }
+                  }}
                   data-testid="input-note-title"
                 />
                 
@@ -231,10 +379,16 @@ export default function NotesDrawer() {
                   
                   <div className="flex-1">
                     <div className="flex items-center gap-2">
-                      <span className={`font-apercu text-white ${note.completed ? "line-through" : ""}`}>
+                      <span className={`font-maison font-medium text-white ${note.completed ? "line-through" : ""}`}>
                         {note.title}
                       </span>
-                      <span className={`px-2 py-1 text-xs rounded-full font-apercu ${activePriorityClasses[note.priority]}`}>
+                      <span className={`px-2 py-1 text-xs rounded-full font-apercu ${
+                        note.priority === "high"
+                          ? "bg-red-500/20 text-red-300 border border-red-500/30"
+                          : note.priority === "medium"
+                          ? "bg-yellow-500/20 text-yellow-300 border border-yellow-500/30"
+                          : "bg-green-500/20 text-green-300 border border-green-500/30"
+                      }`}>
                         {note.priority.charAt(0).toUpperCase() + note.priority.slice(1)}
                       </span>
                     </div>
@@ -259,7 +413,6 @@ export default function NotesDrawer() {
             )}
           </div>
         </div>
-      )}
     </div>
   );
 }
