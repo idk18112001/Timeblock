@@ -1,0 +1,412 @@
+can you complete?
+
+# TimeBlock PRD — Core (Finalized Scope)
+
+**Tagline (system-wide):** **Dump First, Organize Later**
+**Status:** Finalized core scope only — no future/optional features included
+**Platform:** Web (React + Vite)
+**Primary Goals:** Instant capture via persistent Notes Drawer → Progressive scheduling Month → Day → Hour (no separate view buttons)
+
+---
+
+## 1) Scope
+
+**Included (decided):**
+
+* Public Landing (split-screen) with Google Sign-Up + Email capture + Sign-In link
+* Authentication UI (Google OAuth button + Email field UI). *Auth backend behavior is out-of-scope; this PRD covers UI flows and states only.*
+* Guided Walkthrough (front-end overlay coachmarks; no database)
+* Core App Shell with **Month View** (default), **Day View** (on date click), **Hour View** (on hour click)
+* **Persistent Notes Drawer** (collapsed/partial/full, dynamic expansion, drag & drop)
+* Drag & Drop scheduling across the three levels
+* Empty/Loading/Error states, microcopy, accessibility, keyboard/touch behaviors
+
+**Explicitly Out-of-Scope (for this PRD):**
+
+* Pricing page, Teams/Collab, external integrations (e.g., Google Calendar), notifications, settings/profile, data sync, analytics dashboards
+* Any backend persistence or auth logic beyond the presence and UI states of the buttons/forms
+
+---
+
+## 2) Global UI/UX System
+
+### 2.1 Visual Identity
+
+* **Background:** White `#FFFFFF` with **soft purple gradient bursts** (top-right → bottom-left) at very low opacity (≈ 6–10%).
+* **Accent:** Purple `#8B5CF6` used on interactive elements, selected states, focus rings, and feedback.
+* **Gradients:** Primary gradient `linear-gradient(135deg, rgba(139,92,246,0.28), rgba(139,92,246,0))` for hovers, cards, and subtle backgrounds. Avoid heavy fills; keep contrast high.
+* **Borders:** Subtle inner borders on components (`#E5E7EB` 1px).
+* **Glassmorphism:** Popups/drawers use blurred, semi‑transparent layers: bg `rgba(255,255,255,0.65)`, backdrop‑filter: blur(12–16px), soft shadow.
+* **Corners:** Rounded-xl–2xl across interactive surfaces.
+
+### 2.2 Typography
+
+* **Font:** Inter (system fallback allowed).
+* **Scale:**
+
+  * H1 (hero/tagline): 32–40px / 600
+  * H2 (section headings): 24px / 600
+  * Body: 16px / 400
+  * Support: 14px / 400
+  * Microcopy/Labels: 12–13px / 500
+* **Line-height:** 1.4–1.6, generous spacing for scanning.
+
+### 2.3 Motion & States
+
+* **Transitions:** 150–200ms ease-in-out for hover/focus/enter/exit (Framer Motion for overlays/drawer).
+* **Hover:** Faint purple glow + 1.02x scale on primary interactive elements.
+* **Focus:** 2px focus ring `rgba(139,92,246,0.6)` + 1px solid `#8B5CF6` for WCAG AA.
+
+### 2.4 Priority Colors
+
+* Low: Green `#34D399`
+* Medium: Yellow `#FACC15`
+* High: Red `#EF4444`
+
+---
+
+## 3) Public Website (Pre-Login)
+
+### 3.1 Landing — Split Screen (final)
+
+**Layout:** 50/50 split.
+
+**Left Panel (identity + sign-up):**
+
+* Top: **TimeBlock** wordmark (Inter 600, purple gradient fill)
+* Hero line (H1): **Dump First, Organize Later**
+* Subtext (optional): “Capture tasks now. Arrange them when you’re ready.”
+* **Google Sign-Up button** (primary):
+
+  * Left Google icon; text: “Sign up with Google”
+  * Glassmorphism surface; hover glow; disabled state for loading
+* **Email field + Sign Up** (secondary):
+
+  * Email input with rounded border; placeholder: “Enter your email”
+  * Adjacent/stacked button: “Sign Up” (same styling as primary but secondary prominence)
+* **Sign In link** under form (inline text link): “Already have an account? **Sign In**”
+* Legal micro-links (footer-left): Terms, Privacy
+
+**Right Panel (auto-sliding feature showcase):**
+
+* Carousel (auto 5s, swipe/arrow nav, dots):
+
+  1. 3-Level Navigation — “Month → Day → Hour. No extra buttons. Just click through.”
+  2. Notes Drawer — “Persistent, dynamic, and drag-ready.”
+  3. Drag & Drop — “Drop from notes into dates and time slots.”
+  4. Glassmorphism UI — “Calm. Focused. Futuristic.”
+* Each slide is a mocked app screenshot in a rounded ‘browser frame’ card over a subtle gradient burst.
+
+**Accessibility/Keyboard:**
+
+* Tab order: Logo → Hero → Google → Email input → Sign Up → Sign In → Carousel controls.
+* Space/Enter activates buttons and carousel arrows; dots are accessible radio-buttons.
+
+**Error/Edge States:**
+
+* Email validation (front-end only): inline message: “Enter a valid email.”
+* Google button loading state with spinner; disabled during async.
+
+---
+
+## 4) Guided Walkthrough (Front-End Only)
+
+**Purpose:** Introduce the progressive navigation and the Notes Drawer on first visit.
+
+**Trigger:** First successful “enter app” (post Sign-Up/Sign-In) OR user clicks “Help → Walkthrough”.
+
+**Persistence:** Use `localStorage.timeblock_walkthrough_done = true` once completed or skipped. (No DB.)
+
+**Format:** Overlay + coachmarks with dimmed backdrop; dismissible; keyboard & touch friendly.
+
+**Steps:**
+
+1. **Month View coachmark** (pointing to calendar grid):
+   Copy: “This is your Month. Click any date to zoom into the Day.”
+   Actions: *Next*, *Skip*.
+2. **Drawer coachmark** (peeking drawer handle):
+   Copy: “Your Notes Drawer is always here. Write first, organize later.”
+   CTA: *Pull up the drawer* (guides user to expand; accepts click on handle or *Next*).
+3. **Drag & Drop hint** (note item + calendar):
+   Copy: “Drag a note onto a date to schedule it for that day.”
+4. **Day View coachmark** (appears after user clicks a date):
+   Copy: “Here’s your Day timeline. Drop tasks into hours to set times.”
+5. **Hour View coachmark** (appears after user clicks an hour):
+   Copy: “Fine-tune in 15‑minute blocks. Precise and fast.”
+
+**Controls:** Next/Back/Skip; Esc closes; focus trapped within overlay while active.
+
+---
+
+## 5) Core App (Post-Login)
+
+### 5.1 App Shell
+
+* **Header (top):** Left logo; centered date/breadcrumb (“August 2025 • Month”) updating contextually; right: Help (opens walkthrough), user menu placeholder (icon-only, no profile page in scope).
+* **Main:** Calendar canvas (fills viewport width; height minus header and drawer). White base with gradient bursts.
+* **Persistent Bottom Notes Drawer** (see 5.4).
+
+> **No explicit buttons to switch views.** Navigation is contextual:
+> Month View (default) → click a **date** → Day View overlay
+> Day View → click an **hour** → Hour View overlay
+
+### 5.2 Month View (Default)
+
+**Layout:**
+
+* 7-column grid (Mon–Sun), 5–6 rows depending on month.
+* Day cells: min-height responsive; subtle border `#E5E7EB`; hover lift (shadow + faint gradient).
+
+**Content:**
+
+* Date numeral (top-right small badge).
+* Task indicators (dots): max 3 visible; overflow counter “+N”.
+* Tooltip on hover: shows up to top 3 task titles + priority chips; if day-level (no time), shows “All day (unscheduled time)”.
+
+**Interactions:**
+
+* Click on a day cell → **opens Day View** for that date as an overlay sliding from bottom (Framer Motion; 200ms).
+* **Drag & Drop target:**
+
+  * Dragging a note over a day cell highlights the cell (glow + border).
+  * Drop → create **day-level task** (no specific time).
+  * Success toast: “Scheduled for Aug 18.”
+  * The note is **removed from Drawer** immediately.
+
+**Keyboard/Touch:**
+
+* Arrow keys navigate day cells; Enter opens Day View.
+* On touch, long-press shows tooltip; tap opens Day View.
+
+**Empty State (no tasks in month):**
+
+* Center helper text: “Pull up your Notes Drawer and drop your first task.”
+
+### 5.3 Day View (Overlay)
+
+**Invocation:** Clicking any date in Month View.
+
+**Structure:**
+
+* **Header bar inside overlay:** ← Previous Day | **Aug 18, 2025 (Mon)** | Next Day → | **Close (×)**.
+* **Timeline:** Vertical 24h, equal-height hour rows; business hours (e.g., 9–6) subtly highlighted.
+
+**Content & Cards:**
+
+* **Day-level tasks** (from Month) appear in an **Unscheduled** strip at the top of the timeline (left-aligned pill list).
+* Scheduled tasks render as vertical blocks spanning their time range within the relevant hour rows. Overlaps stack side-by-side with minimal gutter.
+
+**Interactions:**
+
+* **Drop targets:** Each hour row highlights on drag; dropping a note here creates a 60‑minute block by default. (User can resize later — resizing handles on hover.)
+* Clicking an **hour row** opens **Hour View** overlay for that specific hour.
+* Dragging a **day-level pill** into an hour row schedules it at that hour (default 60 min).
+* **Resize:** Drag block edges to adjust duration in 15‑minute increments (snap).
+* **Move:** Drag a scheduled block to another hour (snap to 15‑minute grid).
+
+**Keyboard/Touch:**
+
+* Arrow keys move focus across hour rows; Enter to open Hour View.
+* Space to pick up a focused task; arrow keys to move by 15 minutes; Enter to drop.
+* Touch: press‑hold to pick; drag to hour; lift to drop.
+
+**Tooltips:** Hovering a task shows title, (optional) description, priority, start–end time.
+
+**Toasts:**
+
+* “Task scheduled at 10:00–11:00.”
+* “Moved to 14:15–15:00.”
+* “Duration set to 30 minutes.”
+
+### 5.4 Hour View (Overlay)
+
+**Invocation:** Clicking any hour row in Day View.
+
+**Structure:**
+
+* Header inside overlay: ← 9 AM | **Aug 18, 2025 • 09:00–09:59** | → | Close (×)
+* **Grid:** Horizontal layout split into 4 equal **15‑minute** segments: 9:00, 9:15, 9:30, 9:45 (labels visible).
+* Larger click/drag targets than Day View; ample padding.
+
+**Interactions:**
+
+* **Drop target:** Each 15‑min cell highlights on drag; drop creates a 15‑minute task starting at that cell.
+* **Resize:** Extend across adjacent cells in 15‑min steps.
+* **Move:** Drag to another segment; snapping preserved.
+
+**Keyboard/Touch:**
+
+* Arrow keys move segment focus; Enter to place; Shift+Arrow resizes by 15 min.
+
+**Tooltip:** Shows exact start–end time with minute precision.
+
+### 5.5 Notes Drawer (Persistent)
+
+**Visibility:** Persistent along bottom at all times (Month/Day/Hour). Handle remains visible even when collapsed.
+
+**States:**
+
+* **Collapsed:** 24px tall handle bar with **grip** texture + **task count** badge.
+* **Partial:** Expands just enough to show current notes; **auto-expands** depending on note count (never jumps to half-screen by default).
+* **Full:** Full composer & list visible (can still be dragged back down to show a single note only).
+
+**Auto-Expansion Rule:**
+
+* Drawer grows as notes are added (list height = min(sum of note rows + padding, 50% viewport)). If it reaches \~50% due to volume, user can **drag back** to reveal **only a single note**.
+
+**Composition Area:**
+
+* Title (single-line), optional description (multi-line expander).
+* Priority selector (Low/Med/High).
+* “Add Note” button (primary). Enter key submits.
+
+**Note Item (list row):**
+
+* Drag handle (≡), Title, priority chip, optional description teaser, **checkbox** to complete, **kebab menu** (Edit / Delete).
+* Hover: subtle lift + glow on drag handle.
+* Completed: check → row fades to 60% opacity and moves to bottom of list.
+
+**Drag & Drop from Drawer:**
+
+* On drag start: note card becomes **ghost preview** following cursor.
+* Valid drop zones glow (Month cells / Day hours / Hour segments).
+* On drop success: remove from drawer list → render in target view.
+* On invalid drop: shake micro‑animation + toast “Can’t drop here.”
+
+**Keyboard/Touch:**
+
+* Tab cycles through notes; Space picks up; arrows move tentative position; Enter drops.
+* Touch supports press‑hold to pick up.
+
+**Microcopy:**
+
+* Empty state (drawer): “Write your first note below.”
+* After add: “Drag this note into the calendar when ready.”
+
+---
+
+## 6) Drag & Drop Specification (Unified)
+
+**Drag Sources:**
+
+* Notes Drawer items (only).
+
+**Drop Targets:**
+
+* Month: day cells → creates **day-level** task (no time yet).
+* Day: hour rows → creates **60‑minute** task at that hour.
+* Hour: 15‑min segments → creates **15‑minute** task at that segment.
+
+**Snapping:**
+
+* Day view snaps to 15‑minute increments for move/resize; initial placement at hour = 60 min by default.
+
+**Overlap Rules:**
+
+* Overlaps are **allowed**; overlapping blocks stack with a 2–4px gutter. (No conflict errors in core scope.)
+
+**Auto-Scroll:**
+
+* When dragging near top/bottom edges of scrollable overlays, auto-scroll engages at 200–400px/s.
+
+**Feedback:**
+
+* Valid target → highlight + subtle pulse.
+* Drop → success toast + brief task block ‘pop’ animation.
+* Invalid → shake + error toast.
+
+---
+
+## 7) Information Architecture & Labels
+
+* **Month View:** shows month grid; day labels Mon–Sun header; each cell labeled with date number (aria-label: “August 18, 2025”).
+* **Day View:** labeled “August 18, 2025 — Day”; hours labeled 00:00–23:00 with companion 12h badges (e.g., “9 AM”).
+* **Hour View:** labeled “August 18, 2025 — 09:00–09:59”; segments labeled 9:00, 9:15, 9:30, 9:45.
+* **Priority chips:** text + color (e.g., “High”). Icons for color-blind redundancy (▲ High, ● Med, ▴ Low).
+
+---
+
+## 8) Accessibility (AA)
+
+* **Keyboard:** Fully navigable; focus rings visible; Enter/Space activations; Esc closes overlays.
+* **ARIA:**
+
+  * Drawer role="complementary" with aria-expanded state.
+  * Overlays are modal dialogs with focus trap and `aria-labelledby`.
+  * Tasks have `aria-describedby` with time/priority.
+* **Contrast:** All text/buttons ≥ AA; ensure purple-on-white meets contrast.
+* **Motion:** Respect `prefers-reduced-motion` → reduce animation durations and disable pulses.
+
+---
+
+## 9) Copy Deck (Core Microcopy)
+
+* **Hero:** Dump First, Organize Later
+* **Landing subtext:** Capture tasks now. Arrange them when you’re ready.
+* **Google button:** Sign up with Google
+* **Email field placeholder:** Enter your email
+* **Email CTA:** Sign Up
+* **Sign In link:** Already have an account? Sign In
+* **Month empty:** Pull up your Notes Drawer and drop your first task.
+* **Drawer empty:** Write your first note below.
+* **Schedule success:** Scheduled for Aug 18.
+* **Day placement:** Task scheduled at 10:00–11:00.
+* **Invalid drop:** Can’t drop here.
+
+---
+
+## 10) Error & Edge Cases
+
+* **Network‑independent UI:** Since core scope excludes backend, all errors are UI-level: form validation, blocked actions.
+* **Rapid drag/drop spam:** Debounce toasts; max 1 concurrent toast; queue others.
+* **Drawer overflow:** Virtualize list after \~50 items; keep scroll smooth.
+* **Very small screens:** Drawer defaults to collapsed; prompts user to pull up.
+
+---
+
+## 11) Performance & Quality
+
+* Target 60fps for drag animations and overlay transitions.
+* Avoid heavy blur on low-power devices (`prefers-reduced-transparency`).
+* Throttle auto-scroll; memoize tooltip renders.
+
+---
+
+## 12) Acceptance Criteria (Sample)
+
+**Landing:**
+
+* [ ] Left panel shows logo, hero line, Google button, email field + Sign Up, Sign In link.
+* [ ] Right panel auto-slides features every \~5s; keyboard accessible.
+
+**Guided Walkthrough:**
+
+* [ ] First entry shows coachmarks; can be skipped; persists completion via localStorage.
+
+**Month View:**
+
+* [ ] Dragging a note onto a date creates a day-level task; drawer removes the note; cell shows a dot.
+* [ ] Clicking a date opens Day View overlay.
+
+**Day View:**
+
+* [ ] Unscheduled tasks appear in a top strip; can be dragged into hour rows.
+* [ ] Dropping creates a 60‑minute block; moving/resizing snaps to 15 minutes.
+* [ ] Clicking an hour opens Hour View.
+
+**Hour View:**
+
+* [ ] Dropping into a 15‑min segment creates a 15‑minute task; resizing/moving stays on 15‑min grid.
+
+**Notes Drawer:**
+
+* [ ] Auto-expands with note count; user can drag to show only a single note if desired.
+* [ ] Completed notes fade and move to bottom.
+
+**Accessibility:**
+
+* [ ] All interactive elements reachable via keyboard with visible focus.
+
+---
+
+**End of PRD (Core-only, fully detailed).**
