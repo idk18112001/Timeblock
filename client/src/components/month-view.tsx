@@ -169,15 +169,6 @@ export default function MonthView({ currentDate, onDateClick, onMonthChange }: M
             );
           })}
         </div>
-        
-        {/* Empty State */}
-        {tasks.length === 0 && (
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <div className="text-center text-white/60">
-              <p className="font-apercu text-lg">Create notes and drag them here to schedule tasks.</p>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );
