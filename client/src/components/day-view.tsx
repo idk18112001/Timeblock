@@ -24,7 +24,7 @@ export default function DayView({ date, onClose, onHourClick }: DayViewProps) {
 
   const dateString = formatDateString(currentDate);
 
-  const { data: tasks = [] } = useQuery({
+  const { data: tasks = [] } = useQuery<Task[]>({
     queryKey: ["/api/tasks", { date: dateString }],
   });
 
@@ -205,7 +205,7 @@ export default function DayView({ date, onClose, onHourClick }: DayViewProps) {
                               {task.title}
                             </h4>
                             <p className="text-sm text-white/60 font-apercu">
-                              {task.startTime} - {task.duration ? 
+                              {task.startTime} - {task.duration && task.startTime ? 
                                 `${parseInt(task.startTime.split(':')[0]) + Math.floor(task.duration / 60)}:${((parseInt(task.startTime.split(':')[1]) + task.duration % 60) % 60).toString().padStart(2, '0')}` : 
                                 task.startTime}
                             </p>

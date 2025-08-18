@@ -96,11 +96,11 @@ export default function Landing() {
           </div>
           
           {/* Sign In Link */}
-          <p className="text-white/90 font-apercu">
+          <p className="text-white font-apercu">
             Already have an account? {" "}
             <button 
               onClick={() => setLocation("/app")}
-              className="text-soft-cyan hover:text-soft-cyan/80 font-medium underline"
+              className="text-white hover:text-soft-cyan font-medium underline"
               data-testid="link-signin"
             >
               Sign In

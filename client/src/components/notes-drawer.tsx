@@ -14,7 +14,7 @@ import type { Note, InsertNote } from "@shared/schema";
 type DrawerState = "collapsed" | "partial" | "full";
 
 export default function NotesDrawer() {
-  const [drawerState, setDrawerState] = useState<DrawerState>("partial");
+  const [drawerState, setDrawerState] = useState<DrawerState>("collapsed");
   const [newNote, setNewNote] = useState({ title: "", description: "", priority: "medium" as const });
   const [showComposer, setShowComposer] = useState(false);
   
@@ -22,7 +22,7 @@ export default function NotesDrawer() {
   const queryClient = useQueryClient();
   const { handleDragStart, handleDragEnd } = useDragDrop();
 
-  const { data: notes = [], isLoading } = useQuery({
+  const { data: notes = [], isLoading } = useQuery<Note[]>({
     queryKey: ["/api/notes"],
   });
 
@@ -80,15 +80,16 @@ export default function NotesDrawer() {
   };
 
   const getDrawerHeight = () => {
-    if (drawerState === "collapsed") return "24px";
+    if (drawerState === "collapsed") return "32px";
     if (drawerState === "full") return "60vh";
     
     // Partial: auto-expand based on content
-    const baseHeight = 120; // Composer area
-    const noteHeight = 60; // Per note
+    const baseHeight = 140; // Composer area + padding
+    const noteHeight = 68; // Per note
     const maxNotes = 4;
     const visibleNotes = Math.min(notes.length, maxNotes);
-    return `${baseHeight + (visibleNotes * noteHeight)}px`;
+    const contentHeight = baseHeight + (visibleNotes * noteHeight);
+    return `${Math.min(contentHeight, 400)}px`;
   };
 
   const activePriorityClasses = {
@@ -105,7 +106,7 @@ export default function NotesDrawer() {
     >
       {/* Drawer Handle */}
       <div
-        className="drawer-handle h-6 rounded-t-xl cursor-ns-resize flex items-center justify-center relative"
+        className="drawer-handle h-8 rounded-t-xl cursor-ns-resize flex items-center justify-center relative"
         onClick={() => setDrawerState(drawerState === "collapsed" ? "partial" : "collapsed")}
         data-testid="drawer-handle"
       >
@@ -113,24 +114,25 @@ export default function NotesDrawer() {
         <div className="ml-4 text-xs font-apercu text-white/70">
           <span data-testid="text-notes-count">{notes.length}</span> notes
         </div>
-        
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowComposer(!showComposer);
-          }}
-          className="absolute right-4 p-1 text-white/70 hover:text-white"
-          data-testid="button-toggle-composer"
-        >
-          <Plus className="w-4 h-4" />
-        </Button>
       </div>
       
       {/* Drawer Content */}
       {drawerState !== "collapsed" && (
         <div className="glass-card rounded-t-2xl shadow-2xl p-6 h-full overflow-hidden flex flex-col">
+          {/* Add Note Card */}
+          {!showComposer && (
+            <div 
+              className="glass-subtle rounded-xl p-4 mb-4 cursor-pointer hover:bg-white/20 transition-all text-center border-2 border-dashed border-white/20 hover:border-soft-cyan/50"
+              onClick={() => setShowComposer(true)}
+              data-testid="add-note-card"
+            >
+              <div className="flex items-center justify-center gap-2 text-white/70 hover:text-white transition-colors">
+                <Plus className="w-4 h-4" />
+                <span className="font-apercu font-medium">Add Note</span>
+              </div>
+            </div>
+          )}
+
           {/* Composer Area */}
           {showComposer && (
             <div className="mb-4 border-b border-white/10 pb-4">
@@ -146,8 +148,8 @@ export default function NotesDrawer() {
                 
                 <Select
                   value={newNote.priority}
-                  onValueChange={(value: "low" | "medium" | "high") => 
-                    setNewNote({ ...newNote, priority: value })
+                  onValueChange={(value) => 
+                    setNewNote({ ...newNote, priority: value as "low" | "medium" | "high" })
                   }
                 >
                   <SelectTrigger className="w-24 glass-subtle bg-transparent border-white/20 text-white" data-testid="select-note-priority">
@@ -180,6 +182,19 @@ export default function NotesDrawer() {
                   data-testid="textarea-note-description"
                 />
               )}
+              
+              <div className="flex justify-end mt-3">
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setShowComposer(false);
+                    setNewNote({ title: "", description: "", priority: "medium" });
+                  }}
+                  className="text-white/60 hover:text-white mr-2 font-apercu"
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
           )}
           
@@ -187,9 +202,9 @@ export default function NotesDrawer() {
           <div className="flex-1 overflow-y-auto space-y-2" data-testid="notes-list">
             {isLoading ? (
               <div className="text-center text-white/60 py-8">Loading notes...</div>
-            ) : notes.length === 0 ? (
+            ) : notes.length === 0 && !showComposer ? (
               <div className="text-center text-white/60 py-8">
-                <p className="font-apercu">Write your first note below.</p>
+                <p className="font-apercu">Click "Add Note" above to get started.</p>
               </div>
             ) : (
               notes.map((note: Note) => (

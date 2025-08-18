@@ -70,8 +70,8 @@ export default {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        maison: ['Inter', 'system-ui', 'sans-serif'],
-        apercu: ['system-ui', '-apple-system', 'sans-serif'],
+        maison: ['Maison Neue', 'Inter', 'system-ui', 'sans-serif'],
+        apercu: ['Aperçu', 'Inter', 'system-ui', 'sans-serif'],
       },
       backdropBlur: {
         'xs': '2px',

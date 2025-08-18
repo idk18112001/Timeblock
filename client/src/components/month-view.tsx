@@ -16,7 +16,7 @@ export default function MonthView({ currentDate, onDateClick }: MonthViewProps) 
   const queryClient = useQueryClient();
   const { handleDragOver, handleDragLeave, handleDrop } = useDragDrop();
 
-  const { data: tasks = [] } = useQuery({
+  const { data: tasks = [] } = useQuery<Task[]>({
     queryKey: ["/api/tasks"],
   });
 
@@ -86,8 +86,11 @@ export default function MonthView({ currentDate, onDateClick }: MonthViewProps) 
           ))}
         </div>
         
-        {/* Calendar Grid */}
-        <div className="grid grid-cols-7 gap-4 h-5/6">
+        {/* Calendar Grid - Force 6 rows */}
+        <div 
+          className="grid grid-cols-7 gap-4 h-5/6"
+          style={{ gridTemplateRows: 'repeat(6, 1fr)' }}
+        >
           {days.map((day) => {
             const dayTasks = getTasksForDate(day);
             const isCurrentMonth = isSameMonth(day, currentDate);
@@ -95,7 +98,7 @@ export default function MonthView({ currentDate, onDateClick }: MonthViewProps) 
             return (
               <div
                 key={day.toISOString()}
-                className={`day-cell glass-subtle rounded-xl p-3 cursor-pointer hover:bg-white/20 hover:shadow-lg transition-all min-h-24 relative ${
+                className={`day-cell glass-subtle rounded-xl p-3 cursor-pointer hover:bg-white/20 hover:shadow-lg transition-all relative flex flex-col ${
                   !isCurrentMonth ? "opacity-50" : ""
                 }`}
                 onClick={() => onDateClick(day)}
@@ -105,11 +108,13 @@ export default function MonthView({ currentDate, onDateClick }: MonthViewProps) 
                 data-drop-zone={`day-${formatDateString(day)}`}
                 data-testid={`day-cell-${formatDateString(day)}`}
               >
-                <div className="absolute top-2 right-2 text-sm font-apercu text-white/90">
-                  {day.getDate()}
+                <div className="text-right mb-auto">
+                  <span className="text-sm font-apercu text-white/90">
+                    {day.getDate()}
+                  </span>
                 </div>
                 
-                <div className="mt-6 space-y-1">
+                <div className="mt-auto space-y-1">
                   {dayTasks.slice(0, 3).map((task: Task, index) => (
                     <div
                       key={task.id}

@@ -24,7 +24,7 @@ export default function HourView({ date, hour, onClose }: HourViewProps) {
 
   const dateString = formatDateString(date);
 
-  const { data: tasks = [] } = useQuery({
+  const { data: tasks = [] } = useQuery<Task[]>({
     queryKey: ["/api/tasks", { date: dateString }],
   });
 

@@ -54,9 +54,12 @@ export class MemStorage implements IStorage {
   async createNote(userId: string, insertNote: InsertNote): Promise<Note> {
     const id = randomUUID();
     const note: Note = {
-      ...insertNote,
       id,
       userId,
+      title: insertNote.title,
+      description: insertNote.description || null,
+      priority: insertNote.priority,
+      completed: insertNote.completed,
       createdAt: new Date(),
     };
     this.notes.set(id, note);
@@ -67,7 +70,13 @@ export class MemStorage implements IStorage {
     const note = this.notes.get(noteId);
     if (!note) return undefined;
     
-    const updatedNote = { ...note, ...updates };
+    const updatedNote: Note = {
+      ...note,
+      title: updates.title ?? note.title,
+      description: updates.description !== undefined ? updates.description : note.description,
+      priority: updates.priority ?? note.priority,
+      completed: updates.completed ?? note.completed,
+    };
     this.notes.set(noteId, updatedNote);
     return updatedNote;
   }
@@ -95,9 +104,16 @@ export class MemStorage implements IStorage {
   async createTask(userId: string, insertTask: InsertTask): Promise<Task> {
     const id = randomUUID();
     const task: Task = {
-      ...insertTask,
       id,
       userId,
+      noteId: insertTask.noteId || null,
+      title: insertTask.title,
+      description: insertTask.description || null,
+      priority: insertTask.priority,
+      date: insertTask.date,
+      startTime: insertTask.startTime || null,
+      duration: insertTask.duration || null,
+      completed: insertTask.completed,
       createdAt: new Date(),
     };
     this.tasks.set(id, task);
@@ -108,7 +124,17 @@ export class MemStorage implements IStorage {
     const task = this.tasks.get(taskId);
     if (!task) return undefined;
     
-    const updatedTask = { ...task, ...updates };
+    const updatedTask: Task = {
+      ...task,
+      noteId: updates.noteId !== undefined ? updates.noteId : task.noteId,
+      title: updates.title ?? task.title,
+      description: updates.description !== undefined ? updates.description : task.description,
+      priority: updates.priority ?? task.priority,
+      date: updates.date ?? task.date,
+      startTime: updates.startTime !== undefined ? updates.startTime : task.startTime,
+      duration: updates.duration !== undefined ? updates.duration : task.duration,
+      completed: updates.completed ?? task.completed,
+    };
     this.tasks.set(taskId, updatedTask);
     return updatedTask;
   }
