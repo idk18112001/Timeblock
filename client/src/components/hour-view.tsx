@@ -9,6 +9,40 @@ import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { motion } from "framer-motion";
 import type { Note, Task } from "@shared/schema";
 
+// Mock localStorage functions for tasks - same as month and day view
+const mockTasksApi = {
+  async getTasks(): Promise<Task[]> {
+    const stored = localStorage.getItem('timeBlocker_tasks');
+    const tasks = stored ? JSON.parse(stored) : [];
+    return tasks;
+  },
+  
+  async createTask(task: any): Promise<Task> {
+    const tasks = await this.getTasks();
+    const newTask: Task = {
+      id: Date.now().toString(),
+      ...task,
+      userId: 'demo-user',
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+    tasks.push(newTask);
+    localStorage.setItem('timeBlocker_tasks', JSON.stringify(tasks));
+    return newTask;
+  }
+};
+
+const mockNotesApi = {
+  async deleteNote(id: string): Promise<void> {
+    const stored = localStorage.getItem('timeBlocker_notes');
+    if (stored) {
+      const notes = JSON.parse(stored);
+      const filtered = notes.filter((n: any) => n.id !== id);
+      localStorage.setItem('timeBlocker_notes', JSON.stringify(filtered));
+    }
+  }
+};
+
 interface HourViewProps {
   date: Date;
   hour: number;
@@ -26,12 +60,35 @@ export default function HourView({ date, hour, onClose }: HourViewProps) {
 
   const { data: tasks = [] } = useQuery<Task[]>({
     queryKey: ["/api/tasks", { date: dateString }],
+    queryFn: async (): Promise<Task[]> => {
+      try {
+        const response = await apiRequest("GET", "/api/tasks", undefined);
+        const data = await response.json();
+        return data as Task[];
+      } catch (error) {
+        console.log("API failed, using localStorage fallback for tasks in hour view");
+        const allTasks = await mockTasksApi.getTasks();
+        // Filter tasks for this specific date
+        const filteredTasks = allTasks.filter(task => {
+          if (!task.date) return false;
+          const taskDate = new Date(task.date);
+          return formatDateString(taskDate) === dateString;
+        });
+        console.log("Hour view filtered tasks:", filteredTasks);
+        return filteredTasks;
+      }
+    },
   });
 
   const createTaskMutation = useMutation({
     mutationFn: async (taskData: any) => {
-      const res = await apiRequest("POST", "/api/tasks", taskData);
-      return res.json();
+      try {
+        const res = await apiRequest("POST", "/api/tasks", taskData);
+        return res.json();
+      } catch (error) {
+        console.log("API failed, using localStorage fallback for task creation in hour view");
+        return await mockTasksApi.createTask(taskData);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
@@ -41,7 +98,12 @@ export default function HourView({ date, hour, onClose }: HourViewProps) {
 
   const deleteNoteMutation = useMutation({
     mutationFn: async (id: string) => {
-      await apiRequest("DELETE", `/api/notes/${id}`);
+      try {
+        await apiRequest("DELETE", `/api/notes/${id}`);
+      } catch (error) {
+        console.log("API failed, using localStorage fallback for note deletion in hour view");
+        await mockNotesApi.deleteNote(id);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
