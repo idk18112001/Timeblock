@@ -9,10 +9,13 @@ import type { Note, Task } from "@shared/schema";
 const mockTasksApi = {
   async getTasks(): Promise<Task[]> {
     const stored = localStorage.getItem('timeBlocker_tasks');
-    return stored ? JSON.parse(stored) : [];
+    const tasks = stored ? JSON.parse(stored) : [];
+    console.log('mockTasksApi.getTasks returning:', tasks);
+    return tasks;
   },
   
   async createTask(task: any): Promise<Task> {
+    console.log('mockTasksApi.createTask called with:', task);
     const tasks = await this.getTasks();
     const newTask: Task = {
       id: Date.now().toString(),
@@ -21,8 +24,10 @@ const mockTasksApi = {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+    console.log('Created task object:', newTask);
     tasks.push(newTask);
     localStorage.setItem('timeBlocker_tasks', JSON.stringify(tasks));
+    console.log('Saved to localStorage. Total tasks:', tasks.length);
     return newTask;
   }
 };
@@ -55,25 +60,35 @@ export default function MonthView({ currentDate, onDateClick, onMonthChange }: M
     queryFn: async () => {
       try {
         const res = await apiRequest("GET", "/api/tasks", undefined);
-        return res.json();
+        const data = await res.json();
+        console.log('Tasks loaded from API:', data);
+        return data;
       } catch (error) {
         console.warn('API not available, using localStorage for tasks:', error);
-        return mockTasksApi.getTasks();
+        const data = await mockTasksApi.getTasks();
+        console.log('Tasks loaded from localStorage:', data);
+        return data;
       }
     },
   });
 
   const createTaskMutation = useMutation({
     mutationFn: async (taskData: { noteId?: string; title: string; description?: string; priority: string; date: string; startTime?: string | null; duration?: number | null }) => {
+      console.log('Creating task with data:', taskData);
       try {
         const res = await apiRequest("POST", "/api/tasks", taskData);
-        return res.json();
+        const result = await res.json();
+        console.log('Task created via API:', result);
+        return result;
       } catch (error) {
         console.warn('API not available, using localStorage for task creation:', error);
-        return mockTasksApi.createTask(taskData);
+        const result = await mockTasksApi.createTask(taskData);
+        console.log('Task created via localStorage:', result);
+        return result;
       }
     },
     onSuccess: () => {
+      console.log('Task creation successful, invalidating queries');
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notes"] });
     },
@@ -95,7 +110,9 @@ export default function MonthView({ currentDate, onDateClick, onMonthChange }: M
 
   const getTasksForDate = (date: Date): Task[] => {
     const dateString = formatDateString(date);
-    return tasks.filter((task: Task) => task.date === dateString);
+    const tasksForDate = tasks.filter((task: Task) => task.date === dateString);
+    console.log(`Tasks for ${dateString}:`, tasksForDate);
+    return tasksForDate;
   };
 
   const getPriorityColor = (priority: string) => {
@@ -173,17 +190,10 @@ export default function MonthView({ currentDate, onDateClick, onMonthChange }: M
                   </span>
                 </div>
                 
-                <div className="mt-auto space-y-1">
-                  {dayTasks.slice(0, 3).map((task: Task, index) => (
-                    <div
-                      key={task.id}
-                      className={`w-2 h-2 rounded-full ${getPriorityColor(task.priority)}`}
-                      title={task.title}
-                    />
-                  ))}
-                  {dayTasks.length > 3 && (
-                    <div className="text-xs text-white/60 font-apercu">
-                      +{dayTasks.length - 3}
+                <div className="mt-auto flex justify-end">
+                  {dayTasks.length > 0 && (
+                    <div className="w-6 h-6 bg-soft-cyan rounded-full flex items-center justify-center text-xs font-apercu font-bold text-white shadow-lg shadow-soft-cyan/30">
+                      {dayTasks.length}
                     </div>
                   )}
                 </div>

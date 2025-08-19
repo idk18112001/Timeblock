@@ -248,7 +248,7 @@ export default function NotesDrawer() {
           {/* Add Note Card */}
           {!showComposer && (
             <div 
-              className="glass-subtle rounded-xl p-4 mb-4 cursor-pointer hover:bg-white/20 transition-all text-center border-2 border-dashed border-white/20 hover:border-soft-cyan/50"
+              className="rounded-xl p-4 mb-4 cursor-pointer hover:bg-white/10 transition-all text-center border-2 border-dashed border-white/20 hover:border-soft-cyan/50 bg-transparent"
               onClick={() => setShowComposer(true)}
               data-testid="add-note-card"
             >
